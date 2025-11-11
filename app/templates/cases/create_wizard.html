@@ -1,0 +1,713 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  /* ===== Paleta ===== */
+  :root{
+    --bg: #0b1220;
+    --ink: #0f172a;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --indigo: #4f46e5;
+    --teal: #0ea5a4;
+    --amber: #f59e0b;
+    --rose: #f43f5e;
+    --success: #16a34a;
+    --surface: #f7f8fb;
+    --hairline: #e5e7eb;
+  }
+
+  /* ===== Hero header ===== */
+  .page-hero{
+    background: radial-gradient(1200px 600px at 10% -10%, rgba(79,70,229,.25), transparent 60%),
+                radial-gradient(900px 500px at 100% 0%, rgba(14,165,164,.2), transparent 55%);
+    background-color: var(--bg);
+    color:#fff; border-radius: 16px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  }
+  .page-hero h2{ font-weight: 800; letter-spacing:.2px; margin:0; }
+  .page-hero small{ opacity:.9 }
+
+  /* ===== Card ===== */
+  .card.alt{
+    border: 1px solid var(--hairline); border-radius: 14px; overflow: hidden; background: var(--card);
+    box-shadow: 0 6px 20px rgba(2,8,23,.05);
+  }
+  .card.alt .card-header{
+    background: linear-gradient(180deg, rgba(15,23,42,.04), transparent);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  /* ===== Stepper ===== */
+  .stepper { display:flex; gap:.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .stepper .step{
+    display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:999px;
+    background:#eef2ff; color:#4338ca; font-weight:600; border:1px solid #e0e7ff; transition:all .2s ease;
+  }
+  .stepper .step .dot{
+    width:26px; height:26px; display:grid; place-items:center; font-size:.9rem; border-radius:999px;
+    background:#e0e7ff; color:#4338ca;
+  }
+  .stepper .step:hover{ transform: translateY(-1px); }
+  .step.active{ background:var(--indigo); color:#fff; border-color:var(--indigo); }
+  .step.active .dot{ background:#fff; color:var(--indigo); }
+  .step.done{ background:#d1fae5; color:#065f46; border-color:#bbf7d0; }
+  .step.done .dot{ background:#10b981; color:#fff; }
+  .step small{ opacity:.9; font-weight:500; }
+
+  /* ===== Chips ===== */
+  .chip{
+    display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; border-radius:999px; font-weight:600;
+    font-size:.8rem; border:1px solid var(--hairline); background:#f8fafc; color:var(--ink);
+  }
+  .chip.teal{ background:#ecfeff; border-color:#a5f3fc; color:#0f766e; }
+  .chip.amber{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+  .chip.rose{ background:#fff1f2; border-color:#fecdd3; color:#9f1239; }
+  .chip.indigo{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
+  .chip.success{ background:#ecfdf5; border-color:#bbf7d0; color:#065f46; }
+
+  /* ===== Tabla moderna ===== */
+  .table-modern{
+    --row-hover: #f6f7fb;
+    --thead:#0f172a; --thead-bg:#f3f4f6;
+    width:100%; border-collapse: separate; border-spacing:0; overflow:hidden;
+    border:1px solid var(--hairline); border-radius:12px;
+  }
+  .table-modern thead th{
+    background:var(--thead-bg); color:var(--thead);
+    font-weight:700; text-transform:uppercase; letter-spacing:.02em; font-size:.78rem;
+    border-bottom:1px solid var(--hairline);
+  }
+  .table-modern th, .table-modern td{ padding:.6rem .75rem; vertical-align:middle; }
+  .table-modern tbody tr{ transition:background .15s ease; }
+  .table-modern tbody tr:hover{ background:var(--row-hover); }
+  .table-modern tfoot td, .table-modern tfoot th{ background:#fafafa; border-top:2px solid var(--hairline); font-weight:700; position: sticky; bottom: 0; z-index: 1; }
+
+  /* ===== Inputs compactos ===== */
+  .form-control, .form-select{ border-radius:10px; }
+  .form-text{ color: var(--muted) }
+
+  /* ===== Summary box ===== */
+  .summary-box{
+    background:linear-gradient(180deg,#f8fafc, #f1f5f9);
+    border:1px dashed #cbd5e1; border-radius:12px; padding:1rem;
+  }
+
+  /* ===== Botones ===== */
+  .btn-pill{ border-radius:999px; }
+  .btn-primary{ background:var(--indigo); border-color:var(--indigo); }
+  .btn-outline-secondary{ border-radius:999px; }
+  .btn-success{ background:var(--success); border-color:var(--success); }
+
+  /* ===== Adornos ===== */
+  .section-title{ display:flex; align-items:center; gap:.6rem; font-weight:800; color:var(--ink); }
+  .section-title .bar{ width:8px; height:8px; border-radius:2px; background:var(--teal); box-shadow: 12px 0 0 var(--amber), 24px 0 0 var(--indigo); }
+</style>
+
+<div class="page-hero">
+  <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+    <div>
+      <h2>🧾 Nuevo Caso Selva</h2>
+      <small>Gestioná compras ✈️ y remesas 💸 con cotización y seguimiento.</small>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="chip indigo">Workflow</span>
+      <span class="chip teal">Cotizador</span>
+      <span class="chip amber">Notificaciones</span>
+    </div>
+  </div>
+</div>
+
+<div class="card alt">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="section-title mb-0">
+      <span class="bar"></span><span>🚀 Crear Caso</span>
+    </div>
+    <a href="/cases/" class="btn btn-sm btn-outline-secondary btn-pill">↩️ Volver</a>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step active" data-step="1"><span class="dot">1️⃣</span> <span>Tipo</span></div>
+      <div class="step" data-step="2"><span class="dot">2️⃣</span> <span>Contacto</span></div>
+      <div class="step" data-step="3"><span class="dot">3️⃣</span> <span>Detalles</span></div>
+      <div class="step" data-step="4"><span class="dot">4️⃣</span> <span>Revisar</span></div>
+    </div>
+
+    <!-- PASO 1: Tipo -->
+    <div class="step-pane" id="step-1">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">🧭 Tipo de caso</label>
+          <select id="in-case-type" class="form-select">
+            <option value="GOODS" selected>🛍️ GOODS (Compra/envío)</option>
+            <option value="REMIT">💸 REMIT (Remesas)</option>
+          </select>
+          <div class="mt-2 d-flex gap-2">
+            <span class="chip success">En tiempo real</span>
+            <span class="chip">Multi-escenario</span>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">📣 Notificar a</label>
+          <select id="in-notify" class="form-select">
+            <option value="SENDER">Remitente</option>
+            <option value="RECEIVER">Receptor</option>
+            <option value="BOTH" selected>Ambos</option>
+          </select>
+          <div class="form-text">Quién recibe los estados por WhatsApp.</div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">💼 Modo de fee</label>
+          <select id="in-fee-mode" class="form-select">
+            <option value="PCT" selected>Con fee % (clientes)</option>
+            <option value="FIX">Con fee fijo (clientes)</option>
+            <option value="NONE">Sin fee (amigos)</option>
+          </select>
+          <div class="form-text">Se aplica al cálculo de precio final.</div>
+        </div>
+
+        <!-- Toggle de envío (AHORA EN PASO 1) -->
+        <div class="col-md-4" id="ship-col">
+          <label class="form-label">🚚 Envío</label>
+          <div class="d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="in-ship-enable">
+              <label class="form-check-label" for="in-ship-enable">Incluir envío</label>
+            </div>
+            <span id="ship-badge" class="chip d-none">🚚 Envío: <b id="ship-amount">USD 0.00</b></span>
+          </div>
+          <div class="form-text">Si está activado, se usa el costo desde Configuración.</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">🗒️ Notas (opcional)</label>
+          <input id="in-notes" class="form-control" placeholder="Ej: prioridad alta">
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 2: Contacto -->
+    <div class="step-pane d-none" id="step-2">
+      <!-- GOODS -->
+      <div id="panel-goods-contact" class="mb-3">
+        <div class="section-title"><span class="bar"></span><span>🙋 Cliente & Destino (GOODS)</span></div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Nombre del cliente</label>
+            <input id="goods-customer-name" class="form-control" placeholder="Nombre y apellido">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Teléfono (notificaciones)</label>
+            <input id="goods-customer-phone" class="form-control" placeholder="+595 9xx xxx xxx">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">País destino</label>
+            <select id="goods-dst-country" class="form-select">
+              <option value="PY" selected>🇵🇾 Paraguay</option>
+              <option value="US">🇺🇸 USA</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- REMIT -->
+      <div id="panel-remit-contact" class="d-none">
+        <div class="section-title"><span class="bar"></span><span>🔁 Remitente & Receptor (REMIT)</span></div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Remitente - Nombre</label>
+            <input id="remit-sender-name" class="form-control" placeholder="Nombre y apellido">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Remitente - Teléfono</label>
+            <input id="remit-sender-phone" class="form-control" placeholder="+1 305 ...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Receptor - Nombre</label>
+            <input id="remit-receiver-name" class="form-control" placeholder="Nombre y apellido">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Receptor - Teléfono</label>
+            <input id="remit-receiver-phone" class="form-control" placeholder="+595 9..">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 3: Detalles -->
+    <div class="step-pane d-none" id="step-3">
+      <!-- GOODS -->
+      <div id="panel-goods-details">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0"><span class="bar"></span><span>📦 Producto(s) (GOODS)</span></div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-add-item">➕ Agregar ítem</button>
+            <button class="btn btn-sm btn-outline-secondary btn-pill" id="btn-recalc">🧮 Recalcular</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table-modern table table-sm align-middle" id="tbl-items">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th style="width:110px;">Cant.</th>
+                <th style="width:140px;">Costo USD</th>
+                <th style="width:140px;">Precio USD</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th class="text-end">Totales:</th>
+                <th id="sum-qty">0</th>
+                <th id="sum-cost">USD 0.00</th>
+                <th id="sum-price">USD 0.00</th>
+                <th></th>
+              </tr>
+              <tr>
+                <td colspan="5" class="text-end">
+                  <div class="d-inline-block text-start">
+                    <div><span class="chip">🧾 Total Costo: <b id="total-cost">USD 0.00</b></span></div>
+                    <div><span class="chip teal">💰 Total Precio: <b id="total-price">USD 0.00</b></span></div>
+                    <div><span class="chip success">📈 Dif: <b id="total-diff">USD 0.00</b></span></div>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div id="quote-hint" class="form-text">El “Precio USD” se calcula automáticamente según el modo de fee.</div>
+      </div>
+
+      <!-- REMIT -->
+      <div id="panel-remit-details" class="d-none">
+        <div class="section-title"><span class="bar"></span><span>💵 Remesa (REMIT)</span></div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-4">
+            <label class="form-label">Monto (USD)</label>
+            <input id="remit-amount" type="number" min="1" step="0.01" class="form-control" placeholder="250">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Motivo</label>
+            <input id="remit-purpose" class="form-control" placeholder="Familiar, compra, servicio...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 4: Resumen -->
+    <div class="step-pane d-none" id="step-4">
+      <div class="section-title mb-2"><span class="bar"></span><span>🧩 Resumen</span></div>
+      <div class="summary-box">
+        <div id="review-human"></div>
+      </div>
+      <div class="mt-3 text-end">
+        <button id="btn-create" class="btn btn-success btn-pill">✅ Crear Caso</button>
+      </div>
+    </div>
+
+    <!-- Navegación -->
+    <div class="d-flex justify-content-between mt-3">
+      <button id="btn-prev" class="btn btn-outline-secondary btn-pill" disabled>← Anterior</button>
+      <button id="btn-next" class="btn btn-primary btn-pill">Siguiente →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ===== Estado ===== */
+let cur = 1;
+const MAX = 4;
+
+const state = {
+  case_type: 'GOODS',
+  notify: 'BOTH',
+  fee_mode: 'PCT',   // PCT | FIX | NONE
+  notes: '',
+  customer: { name:'', phone:'' },
+  destination: { country:'PY' },
+  items: [], // {description, qty, cost_usd, price_usd}
+  sender: { name:'', phone:'' },
+  receiver: { name:'', phone:'' },
+  amount_usd: null,
+  purpose: '',
+  shipping: { enabled: false, amount: 0, currency: 'USD' }
+};
+
+/* ===== Stepper/UI ===== */
+function updateStepper(){
+  document.querySelectorAll('.step').forEach(s=>{
+    const n = Number(s.dataset.step);
+    s.classList.toggle('active', n===cur);
+    s.classList.toggle('done', n<cur);
+  });
+  document.querySelectorAll('.step-pane').forEach(p=>p.classList.add('d-none'));
+  document.getElementById('step-'+cur).classList.remove('d-none');
+  document.getElementById('btn-prev').disabled = (cur===1);
+  document.getElementById('btn-next').classList.toggle('d-none', cur===MAX);
+}
+
+async function loadShippingSetting(){
+  try{
+    const r = await fetch('/config/settings/shipping_usd');
+    if(!r.ok) return;
+    const j = await r.json();
+    const val = j?.value || {};
+    state.shipping.amount = Number(val.amount || 0);
+    state.shipping.currency = String(val.currency || 'USD');
+    document.getElementById('ship-amount').innerText =
+      `${state.shipping.currency} ${state.shipping.amount.toFixed(2)}`;
+  }catch(e){ console.warn('shipping setting:', e); }
+}
+
+// Toggle envío en paso 1
+document.getElementById('in-ship-enable').addEventListener('change', async (ev)=>{
+  state.shipping.enabled = ev.target.checked;
+  document.getElementById('ship-badge').classList.toggle('d-none', !state.shipping.enabled);
+  // Si ya hay items, re-cotiza
+  if (state.case_type==='GOODS' && state.items.length){ await recalcPrices(); }
+  if (cur === 4) renderHumanReview();
+});
+
+async function syncFromUI(step){
+  if(step===1){
+    state.case_type = document.getElementById('in-case-type').value;
+    state.notify    = document.getElementById('in-notify').value;
+    state.fee_mode  = document.getElementById('in-fee-mode').value;
+    state.notes     = document.getElementById('in-notes').value.trim();
+
+    // Mostrar/ocultar contacto y detalles por tipo
+    const goods = (state.case_type==='GOODS');
+    document.getElementById('panel-goods-contact').classList.toggle('d-none', !goods);
+    document.getElementById('panel-remit-contact').classList.toggle('d-none', goods);
+    document.getElementById('panel-goods-details').classList.toggle('d-none', !goods);
+    document.getElementById('panel-remit-details').classList.toggle('d-none', goods);
+
+    // Si NO es GOODS, desactiva envío
+    document.getElementById('ship-col').classList.toggle('d-none', !goods);
+    if (!goods){
+      state.shipping.enabled = false;
+      document.getElementById('in-ship-enable').checked = false;
+      document.getElementById('ship-badge').classList.add('d-none');
+    }
+  }
+
+  if(step===2){
+    if(state.case_type==='GOODS'){
+      state.customer.name  = document.getElementById('goods-customer-name').value.trim();
+      state.customer.phone = document.getElementById('goods-customer-phone').value.trim();
+      state.destination.country = document.getElementById('goods-dst-country').value;
+    } else {
+      state.sender.name   = document.getElementById('remit-sender-name').value.trim();
+      state.sender.phone  = document.getElementById('remit-sender-phone').value.trim();
+      state.receiver.name = document.getElementById('remit-receiver-name').value.trim();
+      state.receiver.phone= document.getElementById('remit-receiver-phone').value.trim();
+    }
+  }
+
+  if(step===3){
+    if(state.case_type==='GOODS'){
+      syncItems();
+      await recalcPrices();
+    } else {
+      const amt = parseFloat(document.getElementById('remit-amount').value);
+      state.amount_usd = isNaN(amt) ? null : amt;
+      state.purpose    = document.getElementById('remit-purpose').value.trim();
+    }
+  }
+
+  if(step===4){
+    renderHumanReview();
+  }
+}
+
+function validate(step){
+  if(step===1) return true;
+
+  if(step===2){
+    if(state.case_type==='GOODS'){
+      if(!state.customer.name || !state.customer.phone){ toast('Completá nombre y teléfono'); return false; }
+      return true;
+    } else {
+      if(!state.sender.name || !state.sender.phone){ toast('Completá remitente'); return false; }
+      if(!state.receiver.name || !state.receiver.phone){ toast('Completá receptor'); return false; }
+      return true;
+    }
+  }
+
+  if(step===3){
+    if(state.case_type==='GOODS'){
+      if(state.items.length===0){ toast('Agregá al menos un ítem'); return false; }
+      return true;
+    } else {
+      if(!state.amount_usd || state.amount_usd<=0){ toast('Ingresá un monto válido'); return false; }
+      return true;
+    }
+  }
+
+  return true;
+}
+
+document.getElementById('btn-next').addEventListener('click', async ()=>{
+  await syncFromUI(cur);
+  if(!validate(cur)) return;
+  cur = Math.min(MAX, cur+1);
+  updateStepper();
+  if (cur === 4) renderHumanReview();
+});
+
+document.getElementById('btn-prev').addEventListener('click', ()=>{
+  cur = Math.max(1, cur-1);
+  updateStepper();
+});
+
+/* ===== Ítems (GOODS) ===== */
+const tbody = document.querySelector('#tbl-items tbody');
+
+document.getElementById('btn-add-item').addEventListener('click', ()=>{
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input class="form-control form-control-sm in-desc" placeholder="Ej: iPhone 17 Pro Max"></td>
+    <td><input type="number" min="1" value="1" class="form-control form-control-sm in-qty"></td>
+    <td><input type="number" step="0.01" value="0" class="form-control form-control-sm in-cost" placeholder="USD"></td>
+    <td><input type="number" step="0.01" value="0" class="form-control form-control-sm in-price" placeholder="auto" disabled></td>
+    <td><button class="btn btn-sm btn-outline-danger btn-pill btn-del">✖</button></td>
+  `;
+  tbody.appendChild(row);
+
+  row.querySelector('.btn-del').onclick = ()=> { row.remove(); recalcTotals(); };
+
+  ['.in-desc','.in-qty','.in-cost'].forEach(sel=>{
+    row.querySelector(sel).addEventListener('input', async ()=>{
+      syncItems();
+      await recalcPrices();
+    });
+  });
+});
+
+function syncItems(){
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  state.items = rows.map(r=>({
+    description: r.querySelector('.in-desc').value.trim(),
+    qty: Number(r.querySelector('.in-qty').value || 1),
+    cost_usd: Number(r.querySelector('.in-cost').value || 0),
+    price_usd: Number(r.querySelector('.in-price').value || 0)
+  })).filter(x=>x.description);
+}
+
+/* ===== Recalcular precios y totales ===== */
+document.getElementById('btn-recalc').addEventListener('click', ()=> recalcPrices());
+
+async function recalcPrices(){
+  if(state.case_type !== 'GOODS'){ return; }
+  if(state.items.length===0){ recalcTotals(); return; }
+
+  const itemsTotal = state.items.reduce((acc, it)=> acc + (Number(it.cost_usd||0) * Number(it.qty||0)), 0);
+
+  // SIN fee: precio = costo
+  if(state.fee_mode === 'NONE'){
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach((r,i)=>{
+      const cost = Number(r.querySelector('.in-cost').value || 0);
+      r.querySelector('.in-price').value = cost.toFixed(2);
+      state.items[i].price_usd = cost;
+    });
+    recalcTotals();
+    if (cur === 4) renderHumanReview();
+    return;
+  }
+
+  // Con fee: pedir cotización al proxy, pasando shipping según toggle del Paso 1
+  const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
+
+  try {
+    const res = await fetch('/cases/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'GOODS',
+        customer_id: 1,
+        items_total: itemsTotal,
+        shipping_cost: shippingCost,
+        fee_type: (state.fee_mode === 'PCT') ? 1 : (state.fee_mode === 'FIX' ? 2 : 1)
+      })
+    });
+
+    const text = await res.text();
+    let json; try { json = JSON.parse(text); } catch { json = null; }
+
+    if(!res.ok){
+      console.error('HTTP', res.status, text);
+      throw new Error('HTTP '+res.status);
+    }
+
+    const node = Array.isArray(json) ? json[0] : json;
+    if(!node || node.ok !== true || !node.quote){
+      console.error('Respuesta inesperada:', json);
+      throw new Error('Formato de respuesta inválido');
+    }
+
+    const quote = node.quote; // { base, fee_amount, fee_type, fees_available, total }
+    const totalPrecio = Number(quote.total || 0);
+    const totalCosto  = itemsTotal;
+    const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach((row, i)=>{
+      const costUnit = Number(row.querySelector('.in-cost').value || 0);
+      const priceUnit = costUnit * factor;
+      row.querySelector('.in-price').value = priceUnit.toFixed(2);
+      state.items[i].price_usd = priceUnit;
+    });
+
+    recalcTotals();
+  } catch (e){
+    console.error('recalcPrices error:', e);
+    toast('No se pudieron calcular los precios');
+  }
+}
+
+function recalcTotals(){
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let sumQty=0, sumCost=0, sumPrice=0;
+  rows.forEach((r,i)=>{
+    const qty   = Number(r.querySelector('.in-qty').value || 0);
+    const cost  = Number(r.querySelector('.in-cost').value || 0);
+    const price = Number(r.querySelector('.in-price').value || 0);
+    sumQty   += qty;
+    sumCost  += qty * cost;
+    sumPrice += qty * price;
+  });
+  document.getElementById('sum-qty').innerText   = sumQty;
+  document.getElementById('sum-cost').innerText  = 'USD ' + sumCost.toFixed(2);
+  document.getElementById('sum-price').innerText = 'USD ' + sumPrice.toFixed(2);
+  document.getElementById('total-cost').innerText  = 'USD ' + sumCost.toFixed(2);
+  document.getElementById('total-price').innerText = 'USD ' + sumPrice.toFixed(2);
+  document.getElementById('total-diff').innerText  = 'USD ' + (sumPrice - sumCost).toFixed(2);
+  if (cur === 4) renderHumanReview();
+}
+
+/* ===== Resumen humano ===== */
+function renderHumanReview(){
+  const el = document.getElementById('review-human');
+  if(state.case_type==='GOODS'){
+    let sumCost=0, sumPrice=0;
+    const lines = state.items.map(x=>{
+      const lineCost  = (x.qty||0) * (x.cost_usd||0);
+      const linePrice = (x.qty||0) * (x.price_usd||0);
+      sumCost  += lineCost;
+      sumPrice += linePrice;
+      return `<li>${x.qty} × ${x.description} — <span class="chip">🧾 Costo USD ${(x.cost_usd||0).toFixed(2)}</span> <span class="chip teal">💰 Precio USD ${(x.price_usd||0).toFixed(2)}</span></li>`;
+    }).join('');
+
+    const feeTxt = state.fee_mode==='PCT' ? 'Con fee %'
+                 : state.fee_mode==='FIX' ? 'Con fee fijo'
+                 : 'Sin fee';
+
+    el.innerHTML = `
+      <div class="mb-2">
+        <span class="chip indigo">Tipo: GOODS</span>
+        <span class="chip">${state.destination.country==='US'?'🇺🇸 USA':'🇵🇾 Paraguay'}</span>
+        <span class="chip ${state.fee_mode==='NONE'?'rose':(state.fee_mode==='PCT'?'teal':'amber')}">${feeTxt}</span>
+        ${state.shipping.enabled ? `<span class="chip">🚚 Envío: <b>${state.shipping.currency} ${Number(state.shipping.amount||0).toFixed(2)}</b></span>` : ``}
+      </div>
+      <div class="mb-2"><b>Notificar a:</b> ${state.notify}</div>
+      ${state.notes ? `<div class="mb-2"><b>Notas:</b> ${state.notes}</div>` : ``}
+      <div class="mb-2"><b>Cliente:</b> ${state.customer.name || '-'} — ${state.customer.phone || '-'}</div>
+      <div class="mb-2"><b>Ítems:</b><ul class="mt-2">${lines || '<li>-</li>'}</ul></div>
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        <span class="chip">🧾 Total Costo: <b>USD ${sumCost.toFixed(2)}</b></span>
+        <span class="chip teal">💰 Total Precio: <b>USD ${sumPrice.toFixed(2)}</b></span>
+        <span class="chip success">📈 Dif: <b>USD ${(sumPrice - sumCost).toFixed(2)}</b></span>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="mb-2">
+        <span class="chip indigo">Tipo: REMIT</span>
+        <span class="chip">📣 ${state.notify}</span>
+        ${state.notes ? `<span class="chip amber">🗒️ ${state.notes}</span>` : ``}
+      </div>
+      <div class="mb-2"><b>Remitente:</b> ${state.sender.name || '-'} — ${state.sender.phone || '-'}</div>
+      <div class="mb-2"><b>Receptor:</b> ${state.receiver.name || '-'} — ${state.receiver.phone || '-'}</div>
+      <div class="d-flex flex-wrap gap-2">
+        <span class="chip teal">💵 Monto: <b>USD ${Number(state.amount_usd||0).toFixed(2)}</b></span>
+        ${state.purpose ? `<span class="chip">🎯 Motivo: <b>${state.purpose}</b></span>` : ``}
+      </div>
+    `;
+  }
+}
+
+/* ===== Crear caso ===== */
+document.getElementById('btn-create').addEventListener('click', async ()=>{
+  if(!validate(3)) return;
+  const payload = buildPayload();
+
+  const r = await fetch('/cases/create', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+
+  let data = null;
+  const txt = await r.text();
+  try { data = JSON.parse(txt); } catch {}
+
+  if(r.ok){
+    toast('Caso creado ✔');
+    const id = data?.id;
+    setTimeout(()=> location.href = id ? `/cases/${id}` : `/cases/`, 700);
+  } else {
+    console.error('create_case error:', r.status, txt);
+    toast('No se pudo crear el caso');
+  }
+});
+
+function buildPayload(){
+  const base = { case_type: state.case_type, notify: state.notify || 'BOTH' };
+  if(state.notes) base.notes = state.notes;
+
+  if(state.case_type==='GOODS'){
+    base.customer = { name: state.customer.name, phone: state.customer.phone };
+    base.destination = { country: state.destination.country || 'PY' };
+    base.items = state.items.map(x=>({
+      description: x.description,
+      qty: Number(x.qty||1),
+      cost_usd: Number(x.cost_usd||0),
+      price_usd: Number(x.price_usd||0)
+    }));
+    base.fee_mode = state.fee_mode;
+    if (state.shipping.enabled){
+      base.shipping = { amount: state.shipping.amount, currency: state.shipping.currency };
+    }
+  } else {
+    base.sender   = { name: state.sender.name, phone: state.sender.phone };
+    base.receiver = { name: state.receiver.name, phone: state.receiver.phone };
+    base.amount_usd = Number(state.amount_usd);
+    if(state.purpose) base.purpose = state.purpose;
+  }
+  return base;
+}
+
+/* ===== Init ===== */
+document.getElementById('in-case-type').addEventListener('change', ()=> syncFromUI(1));
+document.getElementById('in-fee-mode').addEventListener('change', async ()=>{
+  await syncFromUI(1);
+  if(state.case_type==='GOODS'){ await recalcPrices(); }
+  if (cur === 4) renderHumanReview();
+});
+
+updateStepper();
+syncFromUI(1);
+loadShippingSetting().then(()=>{/* opcional recalc si ya hay items */});
+</script>
+{% endblock %}

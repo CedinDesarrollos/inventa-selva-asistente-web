@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>SLA vencidos</div>
+    <button id="btn-notify" class="btn btn-sm btn-outline-primary">Simular notificación</button>
+  </div>
+  <div class="card-body table-responsive">
+    <table class="table" id="tbl-sla">
+      <thead><tr><th>ID</th><th>Tipo</th><th>Estado</th><th>Updated</th><th>Threshold(h)</th></tr></thead>
+      <tbody>
+        {% for x in items %}
+        <tr>
+          <td><a href="/cases/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.case_type }}</td>
+          <td>{{ x.state }}</td>
+          <td>{{ x.updated_at }}</td>
+          <td>{{ x.threshold_hours }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+new DataTable('#tbl-sla');
+document.getElementById('btn-notify').onclick = async ()=> {
+  const r = await appPost('/sla/notify', {});
+  toast('Notificación simulada ✔');
+  console.log(r);
+}
+</script>
+{% endblock %}

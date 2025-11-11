@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  /* Paleta: índigo + verdes y grises suaves */
+  :root{
+    --indigo:#4f46e5; --indigo-100:#eef2ff;
+    --mint:#10b981; --mint-100:#ecfdf5;
+    --amber:#f59e0b; --amber-100:#fff7ed;
+    --rose:#ef4444; --rose-100:#fef2f2;
+    --slate:#64748b; --slate-100:#f1f5f9;
+  }
+  .kpi-card{
+    border:0; border-radius:1rem; box-shadow:0 6px 18px rgba(2,6,23,.06);
+    background: linear-gradient(180deg, #ffffff, #fafafa);
+  }
+  .kpi-icon{
+    width:48px; height:48px; border-radius:12px; display:grid; place-items:center; font-size:1.25rem;
+  }
+  .kpi-1 .kpi-icon{ background:var(--indigo-100); color:var(--indigo); }
+  .kpi-2 .kpi-icon{ background:var(--amber-100); color:var(--amber); }
+  .kpi-3 .kpi-icon{ background:var(--mint-100); color:var(--mint); }
+
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; background:var(--slate-100); color:var(--slate); }
+  .chip .dot{ width:.5rem; height:.5rem; border-radius:50%; display:inline-block; }
+
+  .status-badge{
+    padding:.25rem .5rem; border-radius:.5rem; font-weight:600; font-size:.8rem; letter-spacing:.2px;
+  }
+  /* mapping por data-state (normalizar a minúsculas en el attr) */
+  .status-badge[data-state*="pend"] { background:var(--amber-100); color:var(--amber); }
+  .status-badge[data-state*="enci"] { background:var(--indigo-100); color:var(--indigo); } /* en curso */
+  .status-badge[data-state*="prog"] { background:#eefdfb; color:#0891b2; } /* programado */
+  .status-badge[data-state*="ok"],
+  .status-badge[data-state*="compl"],
+  .status-badge[data-state*="done"] { background:var(--mint-100); color:var(--mint); }
+  .status-badge[data-state*="venc"],
+  .status-badge[data-state*="error"],
+  .status-badge[data-state*="rech"] { background:var(--rose-100); color:var(--rose); }
+
+  .nav-pills .nav-link{
+    border-radius:999px; padding:.5rem .9rem; font-weight:600;
+  }
+  .nav-pills .nav-link.active{ background:var(--indigo); }
+  .table thead th{ font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; border-bottom:1px solid #e5e7eb; }
+  .table tbody td{ vertical-align:middle; }
+  .card-rounded{ border-radius:1rem; }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-0">📊 Dashboard de Casos</h3>
+    <div class="text-muted small">Resumen y últimas actividades</div>
+  </div>
+  <div class="d-none d-sm-block">
+    <!-- chips por estado (global) -->
+    {% for k,v in por_estado.items() %}
+      <span class="chip me-1">
+        <span class="dot" style="background:
+          {% if 'venc' in k|lower %}var(--rose)
+          {% elif 'pend' in k|lower %}var(--amber)
+          {% elif 'ok' in k|lower or 'compl' in k|lower or 'done' in k|lower %}var(--mint)
+          {% else %}var(--slate){% endif %};
+        "></span>
+        {{ k }}: {{ v }}
+      </span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3">
+  <div class="col-12 col-md-4">
+    <div class="card kpi-card kpi-1">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon">📁</div>
+        <div>
+          <div class="text-muted small">Total de casos</div>
+          <div class="fs-3 fw-bold mb-0">{{ total }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card kpi-card kpi-2">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon">⏰</div>
+        <div>
+          <div class="text-muted small">SLA vencidos</div>
+          <div class="fs-3 fw-bold mb-0">{{ sla }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card kpi-card kpi-3">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon">🏷️</div>
+        <div>
+          <div class="text-muted small">Estados activos</div>
+          <div class="mt-1">
+            {% for k,v in por_estado.items() %}
+              <span class="chip me-1">{{ k }}: {{ v }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs por tipo de caso -->
+<div class="card card-rounded mt-4 shadow-sm">
+  <div class="card-header bg-white border-0 pt-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+      <div class="mb-2">
+        <h5 class="mb-0">Últimos casos por tipo</h5>
+        <div class="text-muted small">Incluye cliente, estado y última actualización</div>
+      </div>
+
+      <ul class="nav nav-pills" id="caseTypePills" role="tablist">
+        {% for tipo, lista in cases_by_type.items() %}
+          <li class="nav-item" role="presentation">
+            <button class="nav-link {% if loop.first %}active{% endif %}"
+                    id="pill-{{ loop.index }}-tab"
+                    data-bs-toggle="pill"
+                    data-bs-target="#pill-{{ loop.index }}"
+                    type="button" role="tab">
+              {{ tipo }} <span class="badge bg-light text-dark ms-1">{{ lista|length }}</span>
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="card-body pt-0">
+    <div class="tab-content" id="caseTypePillsContent">
+      {% for tipo, lista in cases_by_type.items() %}
+      <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="pill-{{ loop.index }}" role="tabpanel">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle datatable" id="tbl-{{ loop.index }}">
+            <thead>
+              <tr>
+                <th style="width:72px;">ID</th>
+                <th style="min-width:220px;">Cliente</th>
+                <th>Título</th>
+                <th style="width:140px;">Estado</th>
+                <th style="width:160px;">Actualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in lista %}
+                <tr>
+                  <td><a class="text-decoration-none fw-semibold" href="/cases/{{ c.id }}">#{{ c.id }}</a></td>
+                  <td>{{ c.customer_nombre }}</td>
+                  <td class="text-truncate" style="max-width:420px;">{{ c.title }}</td>
+                  <td><span class="status-badge" data-state="{{ c.state_lower }}">{{ c.state }}</span></td>
+                  <td><span class="text-muted">{{ c.updated_at }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('table.datatable').forEach((tbl)=>{
+    // eslint-disable-next-line no-undef
+    new DataTable(tbl, {
+      pageLength: 10,
+      order: [[4,'desc']],
+      stateSave: true,
+      language: {
+        search: "Buscar:",
+        lengthMenu: "Mostrar _MENU_",
+        info: "Mostrando _START_–_END_ de _TOTAL_",
+        paginate: { previous: "‹", next: "›" },
+        zeroRecords: "Sin resultados"
+      }
+    });
+  });
+</script>
+
+
+{% endblock %}

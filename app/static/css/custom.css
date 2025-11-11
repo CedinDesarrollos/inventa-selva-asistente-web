@@ -1,0 +1,4 @@
+body { font-variant-numeric: tabular-nums; }
+.card { border-radius: .8rem; }
+.badge { border-radius: 999px; }
+.chip_fee { display:inline-block; padding:.15rem .6rem; border-radius:999px; background:#dfe8d9; color:#2f5132; font-size:.8rem; }

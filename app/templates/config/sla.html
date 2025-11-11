@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header">Configurar SLA</div>
+  <div class="card-body">
+    <textarea id="json" class="form-control" rows="12">{{ data|tojson(indent=2) }}</textarea>
+    <button class="btn btn-primary mt-2" id="btn-save">Guardar</button>
+  </div>
+</div>
+<script>
+document.getElementById('btn-save').onclick = async ()=>{
+  let payload={}; try{ payload=JSON.parse(document.getElementById('json').value); }catch{ return toast('JSON inválido');}
+  const r = await fetch('/config/sla', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  toast('SLA guardado ✔');
+}
+</script>
+{% endblock %}

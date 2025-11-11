@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header">Caso #{{ c.id }}</div>
+      <div class="card-body">
+        <div class="mb-2"><b>Tipo:</b> {{ c.case_type }}</div>
+        <div class="mb-2"><b>Estado:</b> <span id="lbl-state">{{ c.state }}</span></div>
+        <button class="btn btn-outline-primary btn-sm" id="btn-advance">Cambiar estado</button>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">Cotización</div>
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Tipo</label>
+            <select id="q-kind" class="form-select">
+              <option value="GOODS">GOODS</option>
+              <option value="REMIT">REMIT</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Payload JSON</label>
+            <textarea id="q-payload" class="form-control" rows="3">{}</textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary mt-2" id="btn-quote">Cotizar</button>
+        <pre class="mt-2 small" id="q-out"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Adjuntos</div>
+      <div class="card-body">
+        <input class="form-control" type="file" id="file" />
+        <button class="btn btn-secondary mt-2" id="btn-upload">Subir</button>
+        <div id="up-out" class="small mt-2 text-muted"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CASE_ID = {{ c.id }};
+
+document.getElementById('btn-advance').onclick = async () => {
+  const next = prompt('Estado/evento a aplicar (ej: ENVIADO_A_PY, LISTO_PARA_RETIRO, etc.)');
+  if(!next) return;
+  const r = await appPost(`/cases/${CASE_ID}/event`, { event: next });
+  toast(JSON.stringify(r, null, 2));
+  if(r.new_state){ document.getElementById('lbl-state').innerText = r.new_state; }
+};
+
+document.getElementById('btn-quote').onclick = async () => {
+  const kind = document.getElementById('q-kind').value;
+  let payload = {};
+  try { payload = JSON.parse(document.getElementById('q-payload').value || "{}"); }
+  catch { return toast('JSON inválido en payload'); }
+  payload.kind = kind;
+  const r = await appPost(`/cases/quote`, payload);
+  document.getElementById('q-out').innerText = JSON.stringify(r, null, 2);
+};
+
+document.getElementById('btn-upload').onclick = async () => {
+  const f = document.getElementById('file').files[0];
+  if(!f) return toast('Seleccioná un archivo');
+  const presign = await appPostRaw(`/api/cases/${CASE_ID}/attachments/presign`, {
+    filename: f.name, content_type: f.type || 'application/octet-stream'
+  });
+
+  // PUT binario directo al R2/S3
+  await fetch(presign.upload_url, { method:'PUT', headers: {'Content-Type': f.type}, body: f });
+
+  const commit = await appPostRaw(`/api/cases/${CASE_ID}/attachments/commit`, { key: presign.final_key });
+  document.getElementById('up-out').innerText = 'Adjunto subido: ' + JSON.stringify(commit);
+  toast('Adjunto subido ✔');
+};
+</script>
+{% endblock %}
