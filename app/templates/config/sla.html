@@ -1,17 +1,433 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card shadow-sm">
-  <div class="card-header">Configurar SLA</div>
-  <div class="card-body">
-    <textarea id="json" class="form-control" rows="12">{{ data|tojson(indent=2) }}</textarea>
-    <button class="btn btn-primary mt-2" id="btn-save">Guardar</button>
+
+<style>
+  .cfg-card{ border:0; border-radius:1rem; box-shadow:0 8px 24px rgba(2,6,23,.08); }
+  .cfg-card .card-header{ background:#fff; border:0; padding:1rem 1.25rem; }
+  .cfg-title{ font-weight:700; font-size:1.05rem; margin:0; display:flex; align-items:center; gap:.5rem; }
+  .cfg-sub{ color:#6b7280; font-size:.9rem; }
+  .btn-pill{ border-radius:999px; }
+  .table-sm th, .table-sm td { padding:.5rem .6rem; vertical-align:middle; }
+  .kvs textarea{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+</style>
+
+<div class="container-fluid py-3">
+
+  <!-- ===== PRICING ===== -->
+  <div class="card cfg-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="cfg-title">Pricing (Fees por tipo de caso)</h5>
+        <div class="cfg-sub">Definí fee % y/o fee fijo por <strong>GOODS</strong> y <strong>REMIT</strong>.</div>
+      </div>
+      <button class="btn btn-primary btn-pill" id="btn-save-pricing">Guardar</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="width:120px">Caso</th>
+              <th style="width:140px">Fee %</th>
+              <th style="width:160px">Fee Fijo</th>
+              <th style="width:120px">Activo</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-pricing"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
+
+  <!-- ===== FX RATES ===== -->
+  <div class="card cfg-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="cfg-title">FX (tipo de cambio)</h5>
+        <div class="cfg-sub">Cargá el tipo de cambio por fecha (par <code>USD/PYG</code> por defecto).</div>
+      </div>
+      <div class="d-flex gap-2">
+        <input class="form-control form-control-sm" type="date" id="fx-date" style="width: 160px;">
+        <input class="form-control form-control-sm" type="text" id="fx-rate" placeholder="7700.0" style="width: 140px;">
+        <button class="btn btn-outline-primary btn-sm btn-pill" id="btn-add-fx">Agregar</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th style="width:150px">Fecha</th>
+              <th style="width:140px">Par</th>
+              <th style="width:140px">Rate</th>
+              <th style="width:80px"></th>
+            </tr>
+          </thead>
+          <tbody id="tbl-fx"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLA POLICIES ===== -->
+  <div class="card cfg-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="cfg-title">SLA Policies</h5>
+        <div class="cfg-sub">Umbrales (horas) y destinatario de notificación por estado.</div>
+      </div>
+      <button class="btn btn-primary btn-pill" id="btn-save-sla">Guardar</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th style="width:120px">Caso</th>
+              <th style="width:220px">Estado</th>
+              <th style="width:150px">Threshold (h)</th>
+              <th style="width:160px">Notificar a</th>
+              <th style="width:120px">Activo</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-sla"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VENTANA DE NOTIFICACIÓN ===== -->
+  <div class="card cfg-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="cfg-title">Ventana de Notificación</h5>
+        <div class="cfg-sub">Solo enviar notificaciones entre estos horarios.</div>
+      </div>
+      <button class="btn btn-primary btn-pill" id="btn-save-window">Guardar</button>
+    </div>
+    <div class="card-body row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Timezone</label>
+        <input type="text" class="form-control" id="win-tz" placeholder="America/Asuncion">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Inicio (hora)</label>
+        <input type="number" min="0" max="23" class="form-control" id="win-start">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Fin (hora)</label>
+        <input type="number" min="0" max="23" class="form-control" id="win-end">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="win-active">
+          <label class="form-check-label" for="win-active">Activo</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FEATURE FLAGS ===== -->
+  <div class="card cfg-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="cfg-title">Feature Flags</h5>
+        <div class="cfg-sub">Activá/desactivá comportamientos globales.</div>
+      </div>
+      <button class="btn btn-primary btn-pill" id="btn-save-flags">Guardar</button>
+    </div>
+    <div class="card-body d-flex flex-wrap gap-4">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="flag-window">
+        <label class="form-check-label" for="flag-window">Respetar ventana de notificación</label>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="flag-sla">
+        <label class="form-check-label" for="flag-sla">SLA habilitado</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS (key/value JSON) ===== -->
+  <div class="card cfg-card mb-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="cfg-title">Settings (key/value)</h5>
+        <div class="cfg-sub">Parámetros sueltos (JSON). Ej: <code>shipping_usd</code>.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <input id="new-setting-key" class="form-control form-control-sm" placeholder="clave (p.ej. shipping_usd)" style="width: 240px;">
+        <button class="btn btn-outline-primary btn-sm btn-pill" id="btn-add-setting">Agregar/Actualizar</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive mb-3">
+        <table class="table table-sm" id="tbl-settings">
+          <thead>
+            <tr>
+              <th style="width:260px">Key</th>
+              <th>Value (JSON)</th>
+              <th style="width:120px"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="kvs">
+        <label class="form-label">Edición rápida (bulk):</label>
+        <textarea id="settings-bulk" class="form-control" rows="6" placeholder='[{"key":"shipping_usd","value":{"amount":25,"currency":"USD"}}]'></textarea>
+        <div class="mt-2">
+          <button class="btn btn-secondary btn-pill" id="btn-save-settings-bulk">Guardar bulk</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
+
 <script>
-document.getElementById('btn-save').onclick = async ()=>{
-  let payload={}; try{ payload=JSON.parse(document.getElementById('json').value); }catch{ return toast('JSON inválido');}
-  const r = await fetch('/config/sla', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-  toast('SLA guardado ✔');
+const API = {
+  pricing: '/config/api/pricing',
+  pricingOne: (ct) => `/config/api/pricing/${ct}`,
+  fx: '/config/api/fx',
+  fxDel: (id) => `/config/api/fx/${id}`,
+  sla: '/config/api/sla',
+  window: '/config/api/notification-window',
+  flags: '/config/api/flags',
+  settings: '/config/api/settings',
+  settingOne: (k) => `/config/api/settings/${encodeURIComponent(k)}`,
+  settingsBulk: '/config/api/settings-bulk'
+};
+
+function el(tag, attrs={}, children=[]) {
+  const n = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') n.className=v; else if(k==='html') n.innerHTML=v; else n.setAttribute(k,v);
+  });
+  (Array.isArray(children)?children:[children]).forEach(c => { if(c) n.appendChild(c); });
+  return n;
 }
+
+async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function jput(url,body){ const r = await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function jpost(url,body){ const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function jdel(url){ const r = await fetch(url,{method:'DELETE'}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+function boolCell(checked) {
+  const sw = el('input',{type:'checkbox', class:'form-check-input'});
+  sw.checked = !!checked;
+  const wrap = el('div',{class:'form-check form-switch d-flex align-items-center justify-content-center'},[sw]);
+  return [wrap, sw];
+}
+
+/* ---------- Load & render PRICING ---------- */
+async function loadPricing(){
+  const data = await jget(API.pricing);
+  const tbody = document.getElementById('tbl-pricing'); tbody.innerHTML='';
+  const cases = ['GOODS','REMIT'];
+  const byType = Object.fromEntries((data.items||[]).map(x=>[x.case_type,x]));
+  cases.forEach(ct=>{
+    const row = el('tr');
+    row.appendChild(el('td',{html:`<span class="badge text-bg-light">${ct}</span>`}));
+    const feePct = el('input',{type:'number', step:'0.01', class:'form-control form-control-sm'});
+    const feeFlat= el('input',{type:'number', step:'0.01', class:'form-control form-control-sm'});
+    const [wrapAct, chkAct] = boolCell(true);
+
+    if(byType[ct]){
+      feePct.value = byType[ct].fee_pct ?? '';
+      feeFlat.value= byType[ct].fee_flat ?? '';
+      chkAct.checked = !!byType[ct].active;
+    }
+    row.appendChild(el('td',[feePct]));
+    row.appendChild(el('td',[feeFlat]));
+    row.appendChild(el('td',[wrapAct]));
+    row.dataset.caseType = ct;
+    row._feePct = feePct; row._feeFlat = feeFlat; row._active = chkAct;
+    tbody.appendChild(row);
+  });
+}
+document.getElementById('btn-save-pricing').addEventListener('click', async ()=>{
+  const rows = Array.from(document.querySelectorAll('#tbl-pricing tr'));
+  await Promise.all(rows.map(r=>{
+    const ct = r.dataset.caseType;
+    return jput(API.pricingOne(ct), {
+      fee_pct: parseFloat(r._feePct.value || 0),
+      fee_flat: parseFloat(r._feeFlat.value || 0),
+      active: !!r._active.checked
+    });
+  }));
+  await loadPricing();
+  alert('Pricing guardado.');
+});
+
+/* ---------- Load & render FX ---------- */
+async function loadFX(){
+  const data = await jget(API.fx);
+  const tbody = document.getElementById('tbl-fx'); tbody.innerHTML='';
+  (data.items||[]).forEach(it=>{
+    const tr = el('tr');
+    tr.appendChild(el('td',{html:it.date}));
+    tr.appendChild(el('td',{html:it.pair}));
+    tr.appendChild(el('td',{html:String(it.rate)}));
+    const btnDel = el('button',{class:'btn btn-sm btn-outline-danger btn-pill'},[document.createTextNode('Eliminar')]);
+    btnDel.addEventListener('click', async ()=>{
+      if(confirm('¿Eliminar FX de '+it.date+'?')){
+        await jdel(API.fxDel(it.id));
+        await loadFX();
+      }
+    });
+    tr.appendChild(el('td',[btnDel]));
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('btn-add-fx').addEventListener('click', async ()=>{
+  const date = document.getElementById('fx-date').value;
+  const rate = parseFloat(document.getElementById('fx-rate').value);
+  if(!date || isNaN(rate)) return alert('Completá fecha y rate.');
+  await jpost(API.fx, {date, rate, pair:'USD/PYG'});
+  document.getElementById('fx-rate').value='';
+  await loadFX();
+});
+
+/* ---------- Load & render SLA ---------- */
+const NOTIFY_OPTIONS = ['SENDER','RECIPIENT','SELVA'];
+async function loadSLA(){
+  const data = await jget(API.sla);
+  const tbody = document.getElementById('tbl-sla'); tbody.innerHTML='';
+
+  (data.items||[]).forEach(it=>{
+    const tr = el('tr');
+    tr.appendChild(el('td',{html:`<span class="badge text-bg-light">${it.case_type}</span>`}));
+    tr.appendChild(el('td',{html:it.state}));
+
+    const inpH = el('input',{type:'number', step:'1', class:'form-control form-control-sm', value: it.threshold_hours ?? 0});
+    tr.appendChild(el('td',[inpH]));
+
+    const selN = el('select',{class:'form-select form-select-sm'});
+    NOTIFY_OPTIONS.forEach(n=>{
+      const op = el('option',{value:n, html:n});
+      if(n===it.notify) op.selected = true;
+      selN.appendChild(op);
+    });
+    tr.appendChild(el('td',[selN]));
+
+    const [wrapAct, chkAct] = boolCell(it.active);
+    tr.appendChild(el('td',[wrapAct]));
+
+    tr._caseType = it.case_type;
+    tr._state = it.state;
+    tr._hours = inpH;
+    tr._notify = selN;
+    tr._active = chkAct;
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('btn-save-sla').addEventListener('click', async ()=>{
+  const rows = Array.from(document.querySelectorAll('#tbl-sla tr'));
+  const items = rows.map(r=>({
+    case_type: r._caseType,
+    state: r._state,
+    threshold_hours: parseInt(r._hours.value || 0),
+    notify: r._notify.value,
+    active: !!r._active.checked
+  }));
+  await jput(API.sla, {items});
+  await loadSLA();
+  alert('SLA guardado.');
+});
+
+/* ---------- Ventana de notificación ---------- */
+async function loadWindow(){
+  const data = await jget(API.window);
+  const w = (data && data.window) || {tz:'America/Asuncion',start_h:8,end_h:18,active:true};
+  document.getElementById('win-tz').value = w.tz || 'America/Asuncion';
+  document.getElementById('win-start').value = w.start_h ?? 8;
+  document.getElementById('win-end').value = w.end_h ?? 18;
+  document.getElementById('win-active').checked = !!w.active;
+}
+document.getElementById('btn-save-window').addEventListener('click', async ()=>{
+  const body = {
+    tz: document.getElementById('win-tz').value || 'America/Asuncion',
+    start_h: parseInt(document.getElementById('win-start').value || 8),
+    end_h: parseInt(document.getElementById('win-end').value || 18),
+    active: document.getElementById('win-active').checked
+  };
+  await jput(API.window, body);
+  alert('Ventana guardada.');
+});
+
+/* ---------- Flags ---------- */
+async function loadFlags(){
+  const data = await jget(API.flags);
+  const f = (data && data.flags) || {};
+  document.getElementById('flag-window').checked = !!f.respect_window;
+  document.getElementById('flag-sla').checked = !!f.sla_enabled;
+}
+document.getElementById('btn-save-flags').addEventListener('click', async ()=>{
+  const flags = {
+    respect_window: document.getElementById('flag-window').checked,
+    sla_enabled: document.getElementById('flag-sla').checked
+  };
+  await jput(API.flags, {flags});
+  alert('Flags guardados.');
+});
+
+/* ---------- Settings ---------- */
+async function loadSettings(){
+  const data = await jget(API.settings);
+  const tbody = document.querySelector('#tbl-settings tbody'); tbody.innerHTML='';
+  (data.items||[]).forEach(it=>{
+    const tr = el('tr');
+    const keyCell = el('td',{html:`<code>${it.key}</code>`});
+    const ta = el('textarea',{class:'form-control form-control-sm', rows:'2'});
+    ta.value = JSON.stringify(it.value ?? {}, null, 2);
+    const btn = el('button',{class:'btn btn-sm btn-outline-primary btn-pill'},[document.createTextNode('Guardar')]);
+    btn.addEventListener('click', async ()=>{
+      try {
+        const val = JSON.parse(ta.value || 'null');
+        await jput(API.settingOne(it.key), {value: val});
+        alert(`"${it.key}" actualizado.`);
+        await loadSettings();
+      } catch (e) {
+        alert('JSON inválido en '+it.key+': '+e.message);
+      }
+    });
+    tr.appendChild(keyCell);
+    tr.appendChild(el('td',[ta]));
+    tr.appendChild(el('td',[btn]));
+    tbody.appendChild(tr);
+  });
+  // precargar bulk
+  document.getElementById('settings-bulk').value = JSON.stringify((data.items||[]).map(x=>({key:x.key,value:x.value})), null, 2);
+}
+
+document.getElementById('btn-add-setting').addEventListener('click', async ()=>{
+  const key = document.getElementById('new-setting-key').value.trim();
+  if(!key) return alert('Ingresá una clave.');
+  const valStr = prompt(`Valor JSON para "${key}"`, '{"amount":25,"currency":"USD"}');
+  if(valStr===null) return;
+  try{
+    const val = JSON.parse(valStr);
+    await jput(API.settingOne(key), {value: val});
+    await loadSettings();
+  }catch(e){ alert('JSON inválido: '+e.message); }
+});
+
+document.getElementById('btn-save-settings-bulk').addEventListener('click', async ()=>{
+  try{
+    const items = JSON.parse(document.getElementById('settings-bulk').value || '[]');
+    if(!Array.isArray(items)) throw new Error('Debe ser un array de {key,value}');
+    await jput(API.settingsBulk, {items});
+    await loadSettings();
+    alert('Settings bulk guardados.');
+  }catch(e){ alert('JSON inválido: '+e.message); }
+});
+
+/* ---------- Init ---------- */
+(async function init(){
+  await Promise.all([loadPricing(), loadFX(), loadSLA(), loadWindow(), loadFlags(), loadSettings()]);
+})();
 </script>
+
 {% endblock %}

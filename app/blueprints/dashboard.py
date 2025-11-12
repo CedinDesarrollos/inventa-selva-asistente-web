@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request
 from collections import defaultdict, OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
+
 from ..utils.api import get
 from ..utils.auth import auth_header
 
@@ -8,6 +10,24 @@ bp = Blueprint("dashboard", __name__, template_folder="../templates")
 
 # Caché simple en memoria para nombres de clientes
 _CUSTOMER_CACHE: dict[int, str] = {}
+
+def _format_timestamp_local(src_iso: str) -> tuple[str, str]:
+    """
+    Devuelve (iso_original, display_legible).
+    - Si viene con 'Z' u offset, lo parsea y convierte a zona local del sistema.
+    - Si viene sin tz, asume UTC y convierte a local.
+    - Si falla, deja el ISO como display.
+    """
+    disp = src_iso
+    try:
+        dt = datetime.fromisoformat((src_iso or "").replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt_local = dt.astimezone()  # zona local del sistema, sin ZoneInfo
+        disp = dt_local.strftime("%d/%m/%Y")
+    except Exception:
+        pass
+    return src_iso, disp
 
 def _first_non_empty(*vals):
     for v in vals:
@@ -86,6 +106,9 @@ def index():
             or (f"Cliente #{cid}" if cid else "—")
         )
 
+        #Display de hora y zona horaria
+        src_iso = _first_non_empty(c.get("updated_at"), c.get("created_at"), "")
+        iso_val, disp_val = _format_timestamp_local(src_iso)
 
         norm = {
             "id": c.get("id"),
@@ -94,7 +117,8 @@ def index():
             "state": state,
             "state_lower": (state or "").lower(),
             "title": title,
-            "updated_at": updated_at,
+            "updated_at": iso_val,
+            "updated_at_display": disp_val,
             "customer_nombre": customer_nombre,
         }
 

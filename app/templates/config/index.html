@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .cfg-card{ border:0; border-radius:1rem; box-shadow:0 8px 24px rgba(2,6,23,.08); }
+  .cfg-card .card-header{ background:#fff; border:0; padding:1rem 1.25rem; }
+  .cfg-title{ font-weight:700; font-size:1.05rem; margin:0; display:flex; align-items:center; gap:.5rem; }
+  .cfg-sub{ color:#6b7280; font-size:.9rem; }
+  .btn-pill{ border-radius:999px; }
+  .table-sm th, .table-sm td { padding:.5rem .6rem; vertical-align:middle; }
+  .kvs textarea{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+  .cfg-title { font-weight: 700; display:flex; align-items:center; gap:.4rem; }
+  .card-header p { margin:0; }
+  .bg-light-subtle { background:#fafbfd; }
+  .btn-pill { border-radius:999px; }
+  .table td, .table th { vertical-align: middle; }
+  textarea.form-control { font-family: "Courier New", monospace; font-size: .9rem; }
+
+</style>
+
+<div class="container-fluid py-3" style="max-width:1100px;">
+  <!-- ===== PRICING ===== -->
+  <div class="card cfg-card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+      <h5 class="cfg-title mb-1">💵 Tarifas de servicio (Pricing)</h5>
+      <p class="text-muted small mb-0">Define cuánto cobra Selva por cada tipo de caso. Podés ajustar el porcentaje (%) o un monto fijo (Gs/USD).</p>
+    </div>
+    <div class="card-body bg-light-subtle rounded-3">
+      <table class="table align-middle table-borderless">
+        <thead class="small text-secondary">
+          <tr>
+            <th>Caso</th><th>Fee %</th><th>Fee Fijo</th><th>Activo</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-pricing"></tbody>
+      </table>
+      <div class="text-end">
+        <button class="btn btn-primary btn-pill" id="btn-save-pricing"><i class="bi bi-save"></i> Guardar tarifas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FX ===== -->
+  <div class="card cfg-card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+      <h5 class="cfg-title mb-1">💱 Tipo de cambio (FX)</h5>
+      <p class="text-muted small mb-0">Actualizá la cotización del dólar frente al guaraní. Se usa para calcular pagos y remesas.</p>
+    </div>
+    <div class="card-body bg-light-subtle rounded-3">
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <input class="form-control form-control-sm" type="date" id="fx-date" style="width:160px;">
+        <input class="form-control form-control-sm" type="number" id="fx-rate" placeholder="Ej: 7700" style="width:140px;">
+        <button class="btn btn-outline-primary btn-sm btn-pill" id="btn-add-fx"><i class="bi bi-plus-circle"></i> Agregar</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+          <thead class="small text-secondary">
+            <tr><th>Fecha</th><th>Par</th><th>Rate</th><th></th></tr>
+          </thead>
+          <tbody id="tbl-fx"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLA ===== -->
+  <div class="card cfg-card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+      <h5 class="cfg-title mb-1">⏱️ Plazos automáticos (SLA)</h5>
+      <p class="text-muted small mb-0">Define en cuántas horas se avisa a cada parte si el caso no avanza.</p>
+    </div>
+    <div class="card-body bg-light-subtle rounded-3">
+      <table class="table table-sm align-middle">
+        <thead class="small text-secondary">
+          <tr><th>Caso</th><th>Estado</th><th>Umbral (h)</th><th>Notificar a</th><th>Activo</th></tr>
+        </thead>
+        <tbody id="tbl-sla"></tbody>
+      </table>
+      <div class="text-end">
+        <button class="btn btn-primary btn-pill" id="btn-save-sla"><i class="bi bi-save"></i> Guardar plazos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NOTIFICATION WINDOW ===== -->
+  <div class="card cfg-card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+      <h5 class="cfg-title mb-1">🔔 Horarios de notificación</h5>
+      <p class="text-muted small mb-0">Define en qué horario Selva puede enviar mensajes automáticos (hora local).</p>
+    </div>
+    <div class="card-body bg-light-subtle rounded-3">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Zona horaria</label>
+          <input type="text" class="form-control" id="win-tz" placeholder="America/Asuncion">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Inicio</label>
+          <input type="number" class="form-control" id="win-start" min="0" max="23">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fin</label>
+          <input type="number" class="form-control" id="win-end" min="0" max="23">
+        </div>
+        <div class="col-md-2">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="win-active">
+            <label class="form-check-label" for="win-active">Activo</label>
+          </div>
+        </div>
+      </div>
+      <div class="text-end mt-3">
+        <button class="btn btn-primary btn-pill" id="btn-save-window"><i class="bi bi-save"></i> Guardar horario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FLAGS ===== -->
+  <div class="card cfg-card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white border-0">
+      <h5 class="cfg-title mb-1">⚙️ Funciones automáticas</h5>
+      <p class="text-muted small mb-0">Activá o desactivá reglas automáticas del sistema.</p>
+    </div>
+    <div class="card-body bg-light-subtle rounded-3 d-flex flex-wrap gap-4">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="flag-window">
+        <label class="form-check-label" for="flag-window">Respetar horario de notificación</label>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="flag-sla">
+        <label class="form-check-label" for="flag-sla">Activar monitoreo de plazos (SLA)</label>
+      </div>
+      <div class="text-end w-100">
+        <button class="btn btn-primary btn-pill mt-2" id="btn-save-flags"><i class="bi bi-save"></i> Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS ===== -->
+  <!-- ===== SHIPPING (simple) ===== -->
+<div class="card cfg-card mb-4 border-0 shadow-sm">
+  <div class="card-header bg-white border-0">
+    <h5 class="cfg-title mb-1">📦 Costo de envío</h5>
+    <p class="text-muted small mb-0">Definí el costo base de envío que usa la app.</p>
+  </div>
+  <div class="card-body bg-light-subtle rounded-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-sm-4">
+        <label class="form-label">Monto</label>
+        <input id="ship-amount" type="number" step="0.01" min="0" class="form-control" placeholder="Ej: 25">
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label">Moneda</label>
+        <select id="ship-currency" class="form-select">
+          <option value="USD">USD</option>
+          <option value="PYG">PYG</option>
+        </select>
+      </div>
+      <div class="col-sm-5 text-end">
+        <button id="btn-save-shipping" class="btn btn-primary btn-pill">
+          <i class="bi bi-save"></i> Guardar costo de envío
+        </button>
+      </div>
+    </div>
+    <div class="small text-muted mt-2">
+      Ejemplo: <span class="badge text-bg-light">USD 25</span> o <span class="badge text-bg-light">PYG 20000</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS (Avanzado/oculto) ===== -->
+<div class="card cfg-card mb-5 border-0 shadow-sm">
+  <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="cfg-title mb-1">🛠️ Parámetros avanzados</h5>
+      <p class="text-muted small mb-0">Solo para ajustes especiales. No es necesario tocar esto para el uso diario.</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm btn-pill" type="button"
+            data-bs-toggle="collapse" data-bs-target="#advancedSettings"
+            aria-expanded="false" aria-controls="advancedSettings">
+      Mostrar / ocultar
+    </button>
+  </div>
+
+  <div id="advancedSettings" class="collapse">
+    <div class="card-body bg-light-subtle rounded-3">
+      <div class="table-responsive mb-3">
+        <table class="table table-sm align-middle" id="tbl-settings">
+          <thead class="small text-secondary">
+            <tr><th>Clave</th><th>Valor (JSON)</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="mt-2">
+        <input id="new-setting-key" class="form-control form-control-sm d-inline-block"
+               placeholder="Nueva clave (ej. shipping_usd)" style="width:240px;">
+        <button class="btn btn-outline-primary btn-sm btn-pill" id="btn-add-setting">
+          <i class="bi bi-plus-circle"></i> Agregar/Editar
+        </button>
+      </div>
+
+      <hr class="my-4">
+      <div class="kvs">
+        <label class="form-label fw-semibold">Edición rápida (JSON)</label>
+        <textarea id="settings-bulk" class="form-control" rows="6"
+          placeholder='[{"key":"shipping_usd","value":{"amount":25,"currency":"USD"}}]'></textarea>
+        <div class="text-end mt-2">
+          <button class="btn btn-secondary btn-pill" id="btn-save-settings-bulk">
+            <i class="bi bi-upload"></i> Guardar todo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<script>
+  const API = {
+    pricing: '/config/api/pricing',
+    pricingOne: (ct) => `/config/api/pricing/${ct}`,
+    fx: '/config/api/fx',
+    fxDel: (id) => `/config/api/fx/${id}`,
+    sla: '/config/api/sla',
+    window: '/config/api/notification-window',
+    flags: '/config/api/flags',
+    settings: '/config/api/settings',
+    settingOne: (k) => `/config/api/settings/${encodeURIComponent(k)}`,
+    settingsBulk: '/config/api/settings-bulk'
+  };
+  
+  const SHIPPING_KEY = 'shipping_usd';
+
+function el(tag, attrs = {}, children = []) {
+  // Si el 2º parámetro NO es un objeto plano, trátalo como children
+  const isAttrsObject = attrs && typeof attrs === 'object' && !Array.isArray(attrs) && !(attrs instanceof Node);
+  if (!isAttrsObject) {
+    children = attrs ?? [];
+    attrs = {};
+  }
+
+  const n = document.createElement(tag);
+
+  // Setear atributos/props
+  Object.entries(attrs).forEach(([k, v]) => {
+    if (k === 'class') {
+      n.className = v;
+    } else if (k === 'html') {
+      n.innerHTML = v;
+    } else if (k in n) {
+      // Soporta props comunes (value, type, id, etc.) sin setAttribute
+      try { n[k] = v; } catch { n.setAttribute(k, v); }
+    } else {
+      n.setAttribute(k, v);
+    }
+  });
+
+  // Agregar hijos (string | Node | array)
+  const append = (c) => {
+    if (c == null) return;
+    if (Array.isArray(c)) { c.forEach(append); return; }
+    if (c instanceof Node) { n.appendChild(c); return; }
+    n.appendChild(document.createTextNode(String(c)));
+  };
+  append(children);
+
+  return n;
+}
+
+async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function jput(url,body){ const r = await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function jpost(url,body){ const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function jdel(url){ const r = await fetch(url,{method:'DELETE'}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+function boolCell(checked) {
+  const sw = el('input',{type:'checkbox', class:'form-check-input'});
+  sw.checked = !!checked;
+  const wrap = el('div',{class:'form-check form-switch d-flex align-items-center justify-content-center'},[sw]);
+  return [wrap, sw];
+}
+
+/* ---------- Load & render PRICING ---------- */
+async function loadPricing(){
+  const data = await jget(API.pricing);
+  const tbody = document.getElementById('tbl-pricing'); tbody.innerHTML='';
+  const cases = ['GOODS','REMIT'];
+  const byType = Object.fromEntries((data.items||[]).map(x=>[x.case_type,x]));
+  cases.forEach(ct=>{
+    const row = el('tr');
+    row.appendChild(el('td',{html:`<span class="badge text-bg-light">${ct}</span>`}));
+    const feePct = el('input',{type:'number', step:'0.01', class:'form-control form-control-sm'});
+    const feeFlat= el('input',{type:'number', step:'0.01', class:'form-control form-control-sm'});
+    const [wrapAct, chkAct] = boolCell(true);
+
+    if(byType[ct]){
+      feePct.value = byType[ct].fee_pct ?? '';
+      feeFlat.value= byType[ct].fee_flat ?? '';
+      chkAct.checked = !!byType[ct].active;
+    }
+    row.appendChild(el('td',[feePct]));
+    row.appendChild(el('td',[feeFlat]));
+    row.appendChild(el('td',[wrapAct]));
+    row.dataset.caseType = ct;
+    row._feePct = feePct; row._feeFlat = feeFlat; row._active = chkAct;
+    tbody.appendChild(row);
+  });
+}
+document.getElementById('btn-save-pricing').addEventListener('click', async ()=>{
+  const rows = Array.from(document.querySelectorAll('#tbl-pricing tr'));
+  await Promise.all(rows.map(r=>{
+    const ct = r.dataset.caseType;
+    return jput(API.pricingOne(ct), {
+      fee_pct: parseFloat(r._feePct.value || 0),
+      fee_flat: parseFloat(r._feeFlat.value || 0),
+      active: !!r._active.checked
+    });
+  }));
+  await loadPricing();
+  alert('Pricing guardado.');
+});
+
+/* ---------- Load & render FX ---------- */
+// ------- helpers de formato -------
+const nfPY = new Intl.NumberFormat('es-PY', { maximumFractionDigits: 2 });
+
+function toDateObj(anyDate) {
+  // Acepta "2025-11-12", "Wed, 12 Nov 2025 00:00:00 GMT", Date, etc.
+  if (anyDate instanceof Date) return anyDate;
+  if (typeof anyDate === 'string') {
+    // si ya viene "YYYY-MM-DD" lo parsea en local sin hora
+    const m = anyDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  const d = new Date(anyDate);
+  return isNaN(d) ? null : d;
+}
+
+function fmtDateDMY(anyDate) {
+  const d = toDateObj(anyDate);
+  if (!d) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = d.getFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
+
+function toIsoDate(anyDate) {
+  const d = toDateObj(anyDate);
+  if (!d) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = d.getFullYear();
+  return `${yy}-${mm}-${dd}`;
+}
+
+// ------- FX list -------
+async function loadFX() {
+  const data = await jget(API.fx);
+  const tbody = document.getElementById('tbl-fx'); 
+  tbody.innerHTML = '';
+
+  // ordená por fecha descendente si hiciera falta
+  const items = (data.items || []).slice().sort((a,b)=>{
+    const da = toDateObj(a.date)?.getTime() || 0;
+    const db = toDateObj(b.date)?.getTime() || 0;
+    return db - da;
+  });
+
+  items.forEach(it => {
+    const tr = el('tr');
+
+    // Fecha (bonita)
+    tr.appendChild(el('td', { html: `<span class="badge text-bg-light">${fmtDateDMY(it.date)}</span>` }));
+
+    // Par
+    tr.appendChild(el('td', { html: `<span class="badge text-bg-light">${it.pair || 'USD/PYG'}</span>` }));
+
+    // Rate con miles
+    tr.appendChild(el('td', { html: nfPY.format(Number(it.rate) || 0) }));
+
+    // Eliminar
+    const btnDel = el('button', { class: 'btn btn-sm btn-outline-danger btn-pill' }, 'Eliminar');
+    btnDel.addEventListener('click', async () => {
+      if (confirm(`¿Eliminar FX del ${fmtDateDMY(it.date)}?`)) {
+        await jdel(API.fxDel(it.id));
+        await loadFX();
+      }
+    });
+    tr.appendChild(el('td', [btnDel]));
+
+    tbody.appendChild(tr);
+  });
+}
+
+// mantener tu handler de "Agregar", pero asegurá enviar YYYY-MM-DD
+document.getElementById('btn-add-fx').addEventListener('click', async () => {
+  const dateInput = document.getElementById('fx-date').value; // normalmente "YYYY-MM-DD"
+  const iso = toIsoDate(dateInput || new Date());             // normaliza por si acaso
+  const rate = Number(document.getElementById('fx-rate').value);
+  if (!iso || !Number.isFinite(rate)) return alert('Completá fecha y rate.');
+
+  await jpost(API.fx, { date: iso, rate, pair: 'USD/PYG' });
+  document.getElementById('fx-rate').value = '';
+  await loadFX();
+});
+
+
+/* ---------- Load & render SLA ---------- */
+const NOTIFY_OPTIONS = ['SENDER','RECIPIENT','SELVA'];
+async function loadSLA(){
+  const data = await jget(API.sla);
+  const tbody = document.getElementById('tbl-sla'); tbody.innerHTML='';
+
+  (data.items||[]).forEach(it=>{
+    const tr = el('tr');
+    tr.appendChild(el('td',{html:`<span class="badge text-bg-light">${it.case_type}</span>`}));
+    tr.appendChild(el('td',{html:it.state}));
+
+    const inpH = el('input',{type:'number', step:'1', class:'form-control form-control-sm', value: it.threshold_hours ?? 0});
+    tr.appendChild(el('td',[inpH]));
+
+    const selN = el('select',{class:'form-select form-select-sm'});
+    NOTIFY_OPTIONS.forEach(n=>{
+      const op = el('option',{value:n, html:n});
+      if(n===it.notify) op.selected = true;
+      selN.appendChild(op);
+    });
+    tr.appendChild(el('td',[selN]));
+
+    const [wrapAct, chkAct] = boolCell(it.active);
+    tr.appendChild(el('td',[wrapAct]));
+
+    tr._caseType = it.case_type;
+    tr._state = it.state;
+    tr._hours = inpH;
+    tr._notify = selN;
+    tr._active = chkAct;
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('btn-save-sla').addEventListener('click', async ()=>{
+  const rows = Array.from(document.querySelectorAll('#tbl-sla tr'));
+  const items = rows.map(r=>({
+    case_type: r._caseType,
+    state: r._state,
+    threshold_hours: parseInt(r._hours.value || 0),
+    notify: r._notify.value,
+    active: !!r._active.checked
+  }));
+  await jput(API.sla, {items});
+  await loadSLA();
+  alert('SLA guardado.');
+});
+
+/* ---------- Ventana de notificación ---------- */
+async function loadWindow(){
+  const data = await jget(API.window);
+  const w = (data && data.window) || {tz:'America/Asuncion',start_h:8,end_h:18,active:true};
+  document.getElementById('win-tz').value = w.tz || 'America/Asuncion';
+  document.getElementById('win-start').value = w.start_h ?? 8;
+  document.getElementById('win-end').value = w.end_h ?? 18;
+  document.getElementById('win-active').checked = !!w.active;
+}
+document.getElementById('btn-save-window').addEventListener('click', async ()=>{
+  const body = {
+    tz: document.getElementById('win-tz').value || 'America/Asuncion',
+    start_h: parseInt(document.getElementById('win-start').value || 8),
+    end_h: parseInt(document.getElementById('win-end').value || 18),
+    active: document.getElementById('win-active').checked
+  };
+  await jput(API.window, body);
+  alert('Ventana guardada.');
+});
+
+/* ---------- Flags ---------- */
+async function loadFlags(){
+  const data = await jget(API.flags);
+  const f = (data && data.flags) || {};
+  document.getElementById('flag-window').checked = !!f.respect_window;
+  document.getElementById('flag-sla').checked = !!f.sla_enabled;
+}
+document.getElementById('btn-save-flags').addEventListener('click', async ()=>{
+  const flags = {
+    respect_window: document.getElementById('flag-window').checked,
+    sla_enabled: document.getElementById('flag-sla').checked
+  };
+  await jput(API.flags, {flags});
+  alert('Flags guardados.');
+});
+
+/* ---------- Settings ---------- */
+async function loadSettings(){
+  const data = await jget(API.settings);
+  const tbody = document.querySelector('#tbl-settings tbody'); tbody.innerHTML='';
+
+  (data.items || [])
+    .filter(it => it.key !== 'shipping_usd')   // ocultamos el que ya tiene editor simple
+    .forEach(it=>{
+      const tr = el('tr');
+      const keyCell = el('td',{html:`<code>${it.key}</code>`});
+      const ta = el('textarea',{class:'form-control form-control-sm', rows:'2'});
+      ta.value = JSON.stringify(it.value ?? {}, null, 2);
+      const btn = el('button',{class:'btn btn-sm btn-outline-primary btn-pill'},[document.createTextNode('Guardar')]);
+      btn.addEventListener('click', async ()=>{
+        try{
+          const val = JSON.parse(ta.value || 'null');
+          await jput(API.settingOne(it.key), {value: val});
+          alert(`"${it.key}" actualizado.`);
+          await loadSettings();
+        }catch(e){ alert('JSON inválido en '+it.key+': '+e.message); }
+      });
+      tr.appendChild(keyCell);
+      tr.appendChild(el('td',[ta]));
+      tr.appendChild(el('td',[btn]));
+      tbody.appendChild(tr);
+    });
+
+  // precarga del bulk (incluye todo, si querés podés filtrar también)
+  document.getElementById('settings-bulk').value =
+    JSON.stringify((data.items||[]).map(x=>({key:x.key,value:x.value})), null, 2);
+}
+
+
+document.getElementById('btn-add-setting').addEventListener('click', async ()=>{
+  const key = document.getElementById('new-setting-key').value.trim();
+  if(!key) return alert('Ingresá una clave.');
+  const valStr = prompt(`Valor JSON para "${key}"`, '{"amount":25,"currency":"USD"}');
+  if(valStr===null) return;
+  try{
+    const val = JSON.parse(valStr);
+    await jput(API.settingOne(key), {value: val});
+    await loadSettings();
+  }catch(e){ alert('JSON inválido: '+e.message); }
+});
+
+document.getElementById('btn-save-settings-bulk').addEventListener('click', async ()=>{
+  try{
+    const items = JSON.parse(document.getElementById('settings-bulk').value || '[]');
+    if(!Array.isArray(items)) throw new Error('Debe ser un array de {key,value}');
+    await jput(API.settingsBulk, {items});
+    await loadSettings();
+    alert('Settings bulk guardados.');
+  }catch(e){ alert('JSON inválido: '+e.message); }
+});
+
+/* ---------- Init ---------- */
+(async function init(){
+  await Promise.all([
+    loadPricing(),
+    loadFX(),
+    loadSLA(),
+    loadWindow(),
+    loadFlags(),
+    loadSettings(),
+    loadShippingSetting(),
+  ]);
+})();
+
+
+// --- SETTINGS simples: shipping_usd ---
+
+async function loadShippingSetting(){
+  const useResponse = (r) => {
+    const val = (r && r.value) || {};
+    const n = Number(val.amount);
+    document.getElementById('ship-amount').value = Number.isFinite(n) ? String(n) : '';
+    document.getElementById('ship-currency').value = (val.currency || 'USD');
+  };
+
+  try {
+    const r = await jget(API.settingOne(SHIPPING_KEY));
+    console.log('[shipping:get one]', r);
+    if (r && r.value) return useResponse(r);
+  } catch (e) {
+    console.warn('[shipping:get one] falló, voy a listar. Detalle:', e);
+  }
+
+  try {
+    const all = await jget(API.settings);
+    console.log('[shipping:list]', all);
+    const hit = (all.items || []).find(x => x.key === SHIPPING_KEY);
+    if (hit) return useResponse(hit);
+  } catch (e) {
+    console.warn('[shipping:list] falló también:', e);
+  }
+
+  // Fallback visual
+  document.getElementById('ship-amount').value = '';
+  document.getElementById('ship-currency').value = 'USD';
+}
+
+async function saveShippingSetting(){
+  const amount = Number(document.getElementById('ship-amount').value);
+  const currency = document.getElementById('ship-currency').value || 'USD';
+  if (!Number.isFinite(amount) || amount < 0) {
+    alert('Ingresá un monto válido (ej: 25).'); return;
+  }
+  const r = await jput(API.settingOne(SHIPPING_KEY), { value: { amount, currency } });
+  console.log('[shipping:put]', r);
+  alert('Costo de envío actualizado.');
+  await loadShippingSetting();
+}
+document.getElementById('btn-save-shipping').addEventListener('click', saveShippingSetting);
+
+
+async function saveShippingSetting(){
+  const amount = Number(document.getElementById('ship-amount').value);
+  const currency = document.getElementById('ship-currency').value || 'USD';
+  if (!Number.isFinite(amount) || amount < 0) {
+    alert('Ingresá un monto válido (ej: 25).');
+    return;
+  }
+  const payload = { value: { amount, currency } };
+  const r = await jput(API.settingOne(SHIPPING_KEY), payload);
+  console.log('[shipping:put]', r);
+  alert('Costo de envío actualizado.');
+  await loadShippingSetting();
+}
+document.getElementById('btn-save-shipping').addEventListener('click', saveShippingSetting);
+
+
+
+</script>
+
+{% endblock %}

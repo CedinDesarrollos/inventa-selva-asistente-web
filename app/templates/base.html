@@ -16,6 +16,7 @@
   <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 
+
 </head>
 <body class="bg-light">
 
@@ -25,8 +26,7 @@
     <ul class="navbar-nav me-auto">
       <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
       <li class="nav-item"><a class="nav-link" href="/cases/">Casos</a></li>
-      <li class="nav-item"><a class="nav-link" href="/sla/">SLA</a></li>
-      <li class="nav-item"><a class="nav-link" href="/config/sla">Config</a></li>
+      <li class="nav-item"><a class="nav-link" href="/config/">Config</a></li>
     </ul>
     <button id="btn-logout" class="btn btn-outline-secondary btn-sm">Salir</button>
   </div>
@@ -46,5 +46,8 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Day.js para formatear fechas legibles -->
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/es.js"></script>
 </body>
 </html>
