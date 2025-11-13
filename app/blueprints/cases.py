@@ -27,11 +27,33 @@ def add_event(case_id):
 @bp.post("/quote")
 def quote():
     token = request.cookies.get("jwt")
-    body = request.get_json(force=True)
-    kind = body.pop("kind", "goods")
-    path = "/api/quotes/goods" if kind.upper() == "GOODS" else "/api/quotes/remit"
-    r = post(path, json=body, headers=auth_header(token))
-    return jsonify(r.json()), r.status_code
+    body = request.get_json(force=True) or {}
+
+    kind = (body.pop("kind", "GOODS") or "GOODS").upper()
+    path = "/api/quotes/goods" if kind == "GOODS" else "/api/quotes/remit"
+
+    headers = auth_header(token) if token else {}
+    r = post(path, json=body, headers=headers)
+
+    # Proxy robusto: intenta parsear JSON; si no, devuelve texto
+    try:
+        data = r.json()
+        # Si el upstream ya devuelve {"ok": true/false, ...} lo respetamos.
+        return jsonify(data), r.status_code
+    except ValueError:
+        # No era JSON (por ej. HTML de error). Log + JSON de fallback.
+        print(f"[QUOTE PROXY] Error al parsear JSON desde {path}: status={r.status_code}")
+        print(f"[QUOTE PROXY] Body:\n{(r.text or '')[:1000]}")
+        return (
+            jsonify({
+                "ok": False,
+                "error": f"Upstream {path} devolvió {r.status_code} no JSON",
+                "status_code": r.status_code,
+                "raw": (r.text or "")[:500],
+            }),
+            r.status_code,
+        )
+
 
 @bp.get("/new")
 def new_case():

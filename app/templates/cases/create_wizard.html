@@ -53,7 +53,7 @@
   .step.active .dot{ background:#fff; color:var(--indigo); }
   .step.done{ background:#d1fae5; color:#065f46; border-color:#bbf7d0; }
   .step.done .dot{ background:#10b981; color:#fff; }
-  .step small{ opacity:.9; font-weight:500; }
+  .step.small{ opacity:.9; font-weight:500; }
 
   /* ===== Chips ===== */
   .chip{
@@ -81,7 +81,10 @@
   .table-modern th, .table-modern td{ padding:.6rem .75rem; vertical-align:middle; }
   .table-modern tbody tr{ transition:background .15s ease; }
   .table-modern tbody tr:hover{ background:var(--row-hover); }
-  .table-modern tfoot td, .table-modern tfoot th{ background:#fafafa; border-top:2px solid var(--hairline); font-weight:700; position: sticky; bottom: 0; z-index: 1; }
+  .table-modern tfoot td, .table-modern tfoot th{
+    background:#fafafa; border-top:2px solid var(--hairline); font-weight:700;
+    position: sticky; bottom: 0; z-index: 1;
+  }
 
   /* ===== Inputs compactos ===== */
   .form-control, .form-select{ border-radius:10px; }
@@ -171,7 +174,7 @@
           <div class="form-text">Se aplica al cálculo de precio final.</div>
         </div>
 
-        <!-- Toggle de envío (AHORA EN PASO 1) -->
+        <!-- Toggle de envío (solo GOODS) -->
         <div class="col-md-4" id="ship-col">
           <label class="form-label">🚚 Envío</label>
           <div class="d-flex align-items-center gap-3">
@@ -235,6 +238,23 @@
             <label class="form-label">Receptor - Teléfono</label>
             <input id="remit-receiver-phone" class="form-control" placeholder="+595 9..">
           </div>
+
+          <!-- Países remitente / receptor -->
+          <div class="col-md-6">
+            <label class="form-label">Remitente - País</label>
+            <select id="remit-sender-country" class="form-select">
+              <option value="US" selected>🇺🇸 USA</option>
+              <option value="PY">🇵🇾 Paraguay</option>
+            </select>
+            <div class="form-text">Al elegir, el otro se completa con el país opuesto (podés cambiar luego).</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Receptor - País</label>
+            <select id="remit-receiver-country" class="form-select">
+              <option value="PY" selected>🇵🇾 Paraguay</option>
+              <option value="US">🇺🇸 USA</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
@@ -286,21 +306,69 @@
 
         <div id="quote-hint" class="form-text">El “Precio USD” se calcula automáticamente según el modo de fee.</div>
       </div>
+<!-- REMIT -->
+<div id="panel-remit-details" class="d-none">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="section-title mb-0"><span class="bar"></span><span>💵 Remesa (REMIT)</span></div>
+    <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-recalc-remit">🧮 Calcular</button>
+  </div>
 
-      <!-- REMIT -->
-      <div id="panel-remit-details" class="d-none">
-        <div class="section-title"><span class="bar"></span><span>💵 Remesa (REMIT)</span></div>
-        <div class="row g-3 mt-1">
-          <div class="col-md-4">
-            <label class="form-label">Monto (USD)</label>
-            <input id="remit-amount" type="number" min="1" step="0.01" class="form-control" placeholder="250">
-          </div>
-          <div class="col-md-8">
-            <label class="form-label">Motivo</label>
-            <input id="remit-purpose" class="form-control" placeholder="Familiar, compra, servicio...">
-          </div>
-        </div>
-      </div>
+  <div class="table-responsive mt-1" id="remit-quote-box">
+    <table class="table-modern table table-sm align-middle" id="tbl-remit">
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th style="width:160px;">Monto a Enviar (USD)</th>
+          <th style="width:140px;">Cotización</th>
+          <th style="width:170px;">Monto a Cobrar (USD)</th>
+          <th style="width:170px;">Monto a Cobrar (Gs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="remit-desc">
+            Envío de divisa:
+            <span id="remit-desc-names">Remitente → Receptor</span>
+          </td>
+          <td>
+            <input id="remit-amount"
+                   type="number"
+                   min="1"
+                   step="0.01"
+                   class="form-control form-control-sm"
+                   placeholder="100">
+          </td>
+          <td id="remit-col-fx">-</td>
+          <td id="remit-col-charge-usd">USD 0.00</td>
+          <td id="remit-col-charge-py">Gs. 0</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th class="text-end">Totales:</th>
+          <th id="remit-sum-amt">USD 0.00</th>
+          <th></th>
+          <th id="remit-sum-charge-usd">USD 0.00</th>
+          <th id="remit-sum-charge-py">Gs. 0</th>
+        </tr>
+        <tr>
+          <td colspan="5" class="text-end">
+            <div class="d-inline-block text-start">
+              <div><span class="chip">🧾 Total Costo: <b id="remit-total-cost">USD 0.00</b></span></div>
+              <div><span class="chip teal">💰 Total Precio: <b id="remit-total-price">USD 0.00</b></span></div>
+              <div><span class="chip success">📈 Dif: <b id="remit-total-diff">USD 0.00</b></span></div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <div id="remit-quote-hint" class="form-text mt-2">
+    Ingresá el monto en USD en la tabla. Los montos son estimados según el fee del paso 1 y la tasa del día.
+  </div>
+</div>
+
+      
     </div>
 
     <!-- PASO 4: Resumen -->
@@ -336,10 +404,15 @@ const state = {
   customer: { name:'', phone:'' },
   destination: { country:'PY' },
   items: [], // {description, qty, cost_usd, price_usd}
-  sender: { name:'', phone:'' },
-  receiver: { name:'', phone:'' },
+  sender:  { name:'', phone:'', country:'US' },
+  receiver:{ name:'', phone:'', country:'PY' },
   amount_usd: null,
   purpose: '',
+  fx_rate: null,
+  remit_total_charge: null,
+  remit_fee_amount: null,
+  remit_currency_charge: 'USD',
+  remit_fee_currency: 'USD',
   shipping: { enabled: false, amount: 0, currency: 'USD' }
 };
 
@@ -356,24 +429,48 @@ function updateStepper(){
   document.getElementById('btn-next').classList.toggle('d-none', cur===MAX);
 }
 
-async function loadShippingSetting(){
-  try{
-    const r = await fetch('/config/settings/shipping_usd');
-    if(!r.ok) return;
-    const j = await r.json();
-    const val = j?.value || {};
-    state.shipping.amount = Number(val.amount || 0);
-    state.shipping.currency = String(val.currency || 'USD');
-    document.getElementById('ship-amount').innerText =
-      `${state.shipping.currency} ${state.shipping.amount.toFixed(2)}`;
-  }catch(e){ console.warn('shipping setting:', e); }
+const SHIPPING_KEY = 'shipping_usd';
+
+function formatGs(amount){
+  const v = Math.round(Number(amount || 0));
+  return 'Gs. ' + v.toLocaleString('es-PY');
+}
+
+
+async function loadShipping(){
+  try {
+    const res = await fetch(`/config/api/settings/${encodeURIComponent(SHIPPING_KEY)}`);
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+
+    // Esperamos { key: 'shipping_usd', value: { amount, currency } }
+    const val = (json && (json.value || json?.item?.value)) || {};
+    const amount = Number(val.amount || 0);
+    const currency = String(val.currency || 'USD');
+
+    state.shipping.amount = amount;
+    state.shipping.currency = currency;
+
+    const $txt = document.getElementById('ship-amount');
+    if ($txt) $txt.innerText = `${currency} ${amount.toFixed(2)}`;
+
+    if (state.case_type === 'GOODS' && state.items.length && state.shipping.enabled) {
+      await recalcPrices();
+    }
+    if (cur === 4) renderHumanReview();
+  } catch (e) {
+    console.warn('No se pudo cargar shipping_usd:', e);
+    state.shipping.amount = 0;
+    state.shipping.currency = 'USD';
+    const $txt = document.getElementById('ship-amount');
+    if ($txt) $txt.innerText = `USD 0.00`;
+  }
 }
 
 // Toggle envío en paso 1
 document.getElementById('in-ship-enable').addEventListener('change', async (ev)=>{
   state.shipping.enabled = ev.target.checked;
   document.getElementById('ship-badge').classList.toggle('d-none', !state.shipping.enabled);
-  // Si ya hay items, re-cotiza
   if (state.case_type==='GOODS' && state.items.length){ await recalcPrices(); }
   if (cur === 4) renderHumanReview();
 });
@@ -385,14 +482,12 @@ async function syncFromUI(step){
     state.fee_mode  = document.getElementById('in-fee-mode').value;
     state.notes     = document.getElementById('in-notes').value.trim();
 
-    // Mostrar/ocultar contacto y detalles por tipo
     const goods = (state.case_type==='GOODS');
     document.getElementById('panel-goods-contact').classList.toggle('d-none', !goods);
     document.getElementById('panel-remit-contact').classList.toggle('d-none', goods);
     document.getElementById('panel-goods-details').classList.toggle('d-none', !goods);
     document.getElementById('panel-remit-details').classList.toggle('d-none', goods);
 
-    // Si NO es GOODS, desactiva envío
     document.getElementById('ship-col').classList.toggle('d-none', !goods);
     if (!goods){
       state.shipping.enabled = false;
@@ -407,10 +502,15 @@ async function syncFromUI(step){
       state.customer.phone = document.getElementById('goods-customer-phone').value.trim();
       state.destination.country = document.getElementById('goods-dst-country').value;
     } else {
-      state.sender.name   = document.getElementById('remit-sender-name').value.trim();
-      state.sender.phone  = document.getElementById('remit-sender-phone').value.trim();
-      state.receiver.name = document.getElementById('remit-receiver-name').value.trim();
-      state.receiver.phone= document.getElementById('remit-receiver-phone').value.trim();
+      state.sender.name    = document.getElementById('remit-sender-name').value.trim();
+      state.sender.phone   = document.getElementById('remit-sender-phone').value.trim();
+      state.receiver.name  = document.getElementById('remit-receiver-name').value.trim();
+      state.receiver.phone = document.getElementById('remit-receiver-phone').value.trim();
+      const sc = document.getElementById('remit-sender-country').value;
+      const rc = document.getElementById('remit-receiver-country').value;
+      state.sender.country   = sc;
+      state.receiver.country = rc;
+      updateRemitQuoteUI(null);
     }
   }
 
@@ -421,9 +521,10 @@ async function syncFromUI(step){
     } else {
       const amt = parseFloat(document.getElementById('remit-amount').value);
       state.amount_usd = isNaN(amt) ? null : amt;
-      state.purpose    = document.getElementById('remit-purpose').value.trim();
+      await recalcRemit();
     }
   }
+
 
   if(step===4){
     renderHumanReview();
@@ -455,6 +556,13 @@ function validate(step){
   }
 
   return true;
+}
+
+function inferPairFromCountries(senderCountry, receiverCountry){
+  if (senderCountry === 'US' && receiverCountry === 'PY') return 'USD/PYG';
+  if (senderCountry === 'PY' && receiverCountry === 'US') return 'PYG/USD';
+  // fallback por si acaso
+  return 'USD/PYG';
 }
 
 document.getElementById('btn-next').addEventListener('click', async ()=>{
@@ -504,31 +612,39 @@ function syncItems(){
   })).filter(x=>x.description);
 }
 
-/* ===== Recalcular precios y totales ===== */
+/* ===== Recalcular precios y totales (GOODS) ===== */
 document.getElementById('btn-recalc').addEventListener('click', ()=> recalcPrices());
 
 async function recalcPrices(){
   if(state.case_type !== 'GOODS'){ return; }
   if(state.items.length===0){ recalcTotals(); return; }
 
-  const itemsTotal = state.items.reduce((acc, it)=> acc + (Number(it.cost_usd||0) * Number(it.qty||0)), 0);
+  const itemsTotal = state.items.reduce(
+    (acc, it)=> acc + (Number(it.cost_usd||0) * Number(it.qty||0)), 0
+  );
 
-  // SIN fee: precio = costo
+  const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
+
+  // Modo SIN fee: solo costo + shipping, sin markup
   if(state.fee_mode === 'NONE'){
+    const totalCosto  = itemsTotal;
+    const totalPrecio = totalCosto + shippingCost;  // siempre suma envío si está activo
+    const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
+
     const rows = Array.from(tbody.querySelectorAll('tr'));
-    rows.forEach((r,i)=>{
-      const cost = Number(r.querySelector('.in-cost').value || 0);
-      r.querySelector('.in-price').value = cost.toFixed(2);
-      state.items[i].price_usd = cost;
+    rows.forEach((row, i)=>{
+      const costUnit = Number(row.querySelector('.in-cost').value || 0);
+      const priceUnit = costUnit * factor;
+      row.querySelector('.in-price').value = priceUnit.toFixed(2);
+      state.items[i].price_usd = priceUnit;
     });
+
     recalcTotals();
     if (cur === 4) renderHumanReview();
     return;
   }
 
-  // Con fee: pedir cotización al proxy, pasando shipping según toggle del Paso 1
-  const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
-
+  // Con fee: pedir cotización al proxy, pasando shipping_cost
   try {
     const res = await fetch('/cases/quote', {
       method: 'POST',
@@ -596,6 +712,168 @@ function recalcTotals(){
   if (cur === 4) renderHumanReview();
 }
 
+/* ===== Cotización REMIT ===== */
+
+function updateRemitQuoteUI(quote){
+  const amt = Number(state.amount_usd || 0);
+  const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
+  const receiverFlag = state.receiver.country === 'US' ? '🇺🇸' : '🇵🇾';
+  const senderName   = state.sender.name || 'Remitente';
+  const receiverName = state.receiver.name || 'Receptor';
+
+  // Descripción
+  document.getElementById('remit-desc-names').innerText = `${senderName} → ${receiverName}`;
+
+  // Input de monto + totales de monto
+  const $amtInput = document.getElementById('remit-amount');
+  if($amtInput && !$amtInput.matches(':focus')){
+    $amtInput.value = amt ? amt.toFixed(2) : '';
+  }
+  document.getElementById('remit-sum-amt').innerText = 'USD ' + amt.toFixed(2);
+
+  if (!quote){
+    document.getElementById('remit-col-fx').innerText          = '-';
+    document.getElementById('remit-col-charge-usd').innerText  = 'USD 0.00';
+    document.getElementById('remit-col-charge-py').innerText   = formatGs(0);
+    document.getElementById('remit-sum-charge-usd').innerText  = 'USD 0.00';
+    document.getElementById('remit-sum-charge-py').innerText   = formatGs(0);
+    document.getElementById('remit-total-cost').innerText      = 'USD ' + amt.toFixed(2);
+    document.getElementById('remit-total-price').innerText     = 'USD 0.00';
+    document.getElementById('remit-total-diff').innerText      = 'USD 0.00';
+    return;
+  }
+
+  // Estructura del backend:
+  // {
+  //   fx: { date, pair, rate },
+  //   base_py,
+  //   fees_available,
+  //   fee_type,
+  //   fee_amount,
+  //   total_py
+  // }
+  const fxObj   = quote.fx || {};
+  const fxRate  = Number(fxObj.rate || quote.fx_rate || 0);
+  const feePy   = Number(quote.fee_amount || 0);
+  const totalPy = Number(quote.total_py || 0);
+
+  // Fee en USD y total en USD
+  const feeUsd   = fxRate ? (feePy / fxRate) : 0;
+  const totalUsd = amt + feeUsd;
+
+  state.fx_rate               = fxRate || null;
+  state.remit_fee_amount      = feeUsd;
+  state.remit_fee_currency    = 'USD';
+  state.remit_total_charge    = totalUsd;
+  state.remit_currency_charge = 'USD';
+
+  document.getElementById('remit-col-fx').innerText         = fxRate ? fxRate.toFixed(2) : '-';
+  document.getElementById('remit-col-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
+  document.getElementById('remit-col-charge-py').innerText  = formatGs(totalPy);
+
+  document.getElementById('remit-sum-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
+  document.getElementById('remit-sum-charge-py').innerText  = formatGs(totalPy);
+
+  document.getElementById('remit-total-cost').innerText  = 'USD ' + amt.toFixed(2);
+  document.getElementById('remit-total-price').innerText = 'USD ' + totalUsd.toFixed(2);
+  document.getElementById('remit-total-diff').innerText  = 'USD ' + (totalUsd - amt).toFixed(2);
+}
+
+
+async function recalcRemit(){
+  if (state.case_type !== 'REMIT') return;
+  if (!state.amount_usd || state.amount_usd <= 0){
+    updateRemitQuoteUI(null);
+    if (cur === 4) renderHumanReview();
+    return;
+  }
+
+  // definimos par según países
+  const pair = inferPairFromCountries(state.sender.country, state.receiver.country);
+
+  // ---> mapear fee_mode a fee_type + override
+  let feeType;
+  let feeOverride = null;
+  if (state.fee_mode === 'PCT') {
+    feeType = 1;
+  } else if (state.fee_mode === 'FIX') {
+    feeType = 2;
+  } else {
+    // NONE: sin fee, forzamos override en 0
+    feeType = 0;
+    feeOverride = { fee_pct: 0, fee_flat: 0 };
+  }
+
+  try{
+    const res = await fetch('/cases/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'REMIT',
+        customer_id: 1,          // luego lo parametrizás
+        amount_usd: state.amount_usd,
+        pair: pair,
+        fee_type: feeType,
+        fee_override: feeOverride
+      })
+    });
+
+    const txt = await res.text();
+    let json; try { json = JSON.parse(txt); } catch { json = null; }
+
+    if (!res.ok){
+      console.error('HTTP', res.status, txt);
+      throw new Error('HTTP '+res.status);
+    }
+
+    const node = json;
+    if (!node || node.ok !== true || !node.quote){
+      console.error('Respuesta inesperada (REMIT):', json);
+      throw new Error('Formato de respuesta inválido');
+    }
+
+    updateRemitQuoteUI(node.quote);
+    if (cur === 4) renderHumanReview();
+  }catch(e){
+    console.error('recalcRemit error:', e);
+    toast('No se pudo calcular la remesa');
+  }
+}
+
+document.getElementById('btn-recalc-remit').addEventListener('click', async ()=>{
+  await syncFromUI(2);
+  await syncFromUI(3);
+});
+
+/* ===== Auto-pareja de países REMIT ===== */
+let remitSenderTouched = false;
+let remitReceiverTouched = false;
+
+const $remitSenderCountry   = document.getElementById('remit-sender-country');
+const $remitReceiverCountry = document.getElementById('remit-receiver-country');
+
+$remitSenderCountry.addEventListener('change', async (ev)=>{
+  if(ev.isTrusted){
+    remitSenderTouched = true;
+    if(!remitReceiverTouched){
+      $remitReceiverCountry.value = (ev.target.value === 'US') ? 'PY' : 'US';
+    }
+  }
+  await syncFromUI(2);
+  if(state.case_type==='REMIT'){ await recalcRemit(); }
+});
+
+$remitReceiverCountry.addEventListener('change', async (ev)=>{
+  if(ev.isTrusted){
+    remitReceiverTouched = true;
+    if(!remitSenderTouched){
+      $remitSenderCountry.value = (ev.target.value === 'US') ? 'PY' : 'US';
+    }
+  }
+  await syncFromUI(2);
+  if(state.case_type==='REMIT'){ await recalcRemit(); }
+});
+
 /* ===== Resumen humano ===== */
 function renderHumanReview(){
   const el = document.getElementById('review-human');
@@ -631,17 +909,34 @@ function renderHumanReview(){
       </div>
     `;
   } else {
+    const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
+    const receiverFlag = state.receiver.country === 'US' ? '🇺🇸' : '🇵🇾';
+
+    const feeTxt = state.fee_mode==='PCT' ? 'Con fee %'
+                 : state.fee_mode==='FIX' ? 'Con fee fijo'
+                 : 'Sin fee';
+
+    const amt = Number(state.amount_usd || 0);
+    const fxTxt   = state.fx_rate ? state.fx_rate.toFixed(2) : '-';
+    const feeAmt  = (state.remit_fee_amount != null) ? `${state.remit_fee_currency} ${state.remit_fee_amount.toFixed(2)}` : '-';
+    const totTxt  = (state.remit_total_charge != null) ? `${state.remit_currency_charge} ${state.remit_total_charge.toFixed(2)}` : '-';
+
     el.innerHTML = `
       <div class="mb-2">
         <span class="chip indigo">Tipo: REMIT</span>
+        <span class="chip">${senderFlag} → ${receiverFlag}</span>
+        <span class="chip ${state.fee_mode==='NONE'?'rose':(state.fee_mode==='PCT'?'teal':'amber')}">${feeTxt}</span>
         <span class="chip">📣 ${state.notify}</span>
         ${state.notes ? `<span class="chip amber">🗒️ ${state.notes}</span>` : ``}
       </div>
-      <div class="mb-2"><b>Remitente:</b> ${state.sender.name || '-'} — ${state.sender.phone || '-'}</div>
-      <div class="mb-2"><b>Receptor:</b> ${state.receiver.name || '-'} — ${state.receiver.phone || '-'}</div>
-      <div class="d-flex flex-wrap gap-2">
-        <span class="chip teal">💵 Monto: <b>USD ${Number(state.amount_usd||0).toFixed(2)}</b></span>
-        ${state.purpose ? `<span class="chip">🎯 Motivo: <b>${state.purpose}</b></span>` : ``}
+      <div class="mb-2"><b>Remitente:</b> ${state.sender.name || '-'} — ${state.sender.phone || '-'} (${senderFlag})</div>
+      <div class="mb-2"><b>Receptor:</b> ${state.receiver.name || '-'} — ${state.receiver.phone || '-'} (${receiverFlag})</div>
+      
+      <div class="d-flex flex-wrap gap-2 mt-2">
+        <span class="chip teal">💵 Monto a enviar: <b>USD ${amt.toFixed(2)}</b></span>
+        <span class="chip">💱 Tasa cambio: <b>${fxTxt}</b></span>
+        <span class="chip amber">📎 Fee estimado: <b>${feeAmt}</b></span>
+        <span class="chip success">💰 Monto a cobrar: <b>${totTxt}</b></span>
       </div>
     `;
   }
@@ -690,10 +985,24 @@ function buildPayload(){
       base.shipping = { amount: state.shipping.amount, currency: state.shipping.currency };
     }
   } else {
-    base.sender   = { name: state.sender.name, phone: state.sender.phone };
-    base.receiver = { name: state.receiver.name, phone: state.receiver.phone };
-    base.amount_usd = Number(state.amount_usd);
-    if(state.purpose) base.purpose = state.purpose;
+    base.sender   = { name: state.sender.name, phone: state.sender.phone, country: state.sender.country };
+    base.receiver = { name: state.receiver.name, phone: state.receiver.phone, country: state.receiver.country };
+    base.amount_usd = Number(state.amount_usd || 0);
+    base.fee_mode   = state.fee_mode;
+    
+    if(state.fx_rate != null) base.fx_rate = state.fx_rate;
+    if(state.remit_total_charge != null){
+      base.total_charge = {
+        amount: state.remit_total_charge,
+        currency: state.remit_currency_charge
+      };
+    }
+    if(state.remit_fee_amount != null){
+      base.fee_amount = {
+        amount: state.remit_fee_amount,
+        currency: state.remit_fee_currency
+      };
+    }
   }
   return base;
 }
@@ -703,11 +1012,18 @@ document.getElementById('in-case-type').addEventListener('change', ()=> syncFrom
 document.getElementById('in-fee-mode').addEventListener('change', async ()=>{
   await syncFromUI(1);
   if(state.case_type==='GOODS'){ await recalcPrices(); }
+  if(state.case_type==='REMIT'){ await recalcRemit(); }
   if (cur === 4) renderHumanReview();
+});
+
+// Recalcular REMIT cuando cambia monto
+document.getElementById('remit-amount').addEventListener('input', async ()=>{
+  await syncFromUI(3);
 });
 
 updateStepper();
 syncFromUI(1);
-loadShippingSetting().then(()=>{/* opcional recalc si ya hay items */});
+loadShipping();
 </script>
+
 {% endblock %}
