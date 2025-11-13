@@ -404,15 +404,29 @@ const state = {
   customer: { name:'', phone:'' },
   destination: { country:'PY' },
   items: [], // {description, qty, cost_usd, price_usd}
+
+  // Para REMIT
   sender:  { name:'', phone:'', country:'US' },
   receiver:{ name:'', phone:'', country:'PY' },
   amount_usd: null,
   purpose: '',
+
+  // FX REMIT
   fx_rate: null,
+  fx_date: null,
+  fx_pair: null,
   remit_total_charge: null,
   remit_fee_amount: null,
   remit_currency_charge: 'USD',
   remit_fee_currency: 'USD',
+  remit_breakdown_py: null, // { base_py, fee_py, total_py }
+
+  // FX GOODS
+  fx_rate_goods: null,
+  fx_goods_date: null,
+  fx_goods_pair: 'USD/PYG',
+
+  // Shipping GOODS
   shipping: { enabled: false, amount: 0, currency: 'USD' }
 };
 
@@ -436,7 +450,7 @@ function formatGs(amount){
   return 'Gs. ' + v.toLocaleString('es-PY');
 }
 
-
+/* ===== Cargar shipping por default ===== */
 async function loadShipping(){
   try {
     const res = await fetch(`/config/api/settings/${encodeURIComponent(SHIPPING_KEY)}`);
@@ -467,6 +481,47 @@ async function loadShipping(){
   }
 }
 
+/* ===== Cargar FX para GOODS (siempre USD/PYG) ===== */
+async function loadFxGoods(){
+  try {
+    const res = await fetch('/config/api/fx/latest?pair=USD/PYG');
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+
+    // Soportar varios formatos: {rate,...} || {fx:{...}} || {item:{...}}
+    const fxObj = (json && (json.fx || json.item || json.value)) || json || {};
+
+    const rate = Number(fxObj.rate || 0) || null;
+    const date = fxObj.date || null;
+    const pair = fxObj.pair || 'USD/PYG';
+
+    state.fx_rate_goods = rate;
+    state.fx_goods_date = date;
+    state.fx_goods_pair = pair;
+
+    const $fx = document.getElementById('fx-goods');
+    if ($fx) {
+      $fx.innerText = rate ? `${pair} @ ${rate.toFixed(2)}` : 'Sin FX';
+    }
+
+    if (state.case_type === 'GOODS' && state.items.length) {
+      await recalcPrices();
+    }
+    if (cur === 4) renderHumanReview();
+
+  } catch (e) {
+    console.warn('No se pudo cargar FX GOODS:', e);
+    state.fx_rate_goods = null;
+    state.fx_goods_date = null;
+    state.fx_goods_pair = 'USD/PYG';
+
+    const $fx = document.getElementById('fx-goods');
+    if ($fx) {
+      $fx.innerText = 'Sin FX';
+    }
+  }
+}
+
 // Toggle envío en paso 1
 document.getElementById('in-ship-enable').addEventListener('change', async (ev)=>{
   state.shipping.enabled = ev.target.checked;
@@ -475,6 +530,7 @@ document.getElementById('in-ship-enable').addEventListener('change', async (ev)=
   if (cur === 4) renderHumanReview();
 });
 
+/* ===== Sync desde UI al state ===== */
 async function syncFromUI(step){
   if(step===1){
     state.case_type = document.getElementById('in-case-type').value;
@@ -525,7 +581,6 @@ async function syncFromUI(step){
     }
   }
 
-
   if(step===4){
     renderHumanReview();
   }
@@ -561,7 +616,6 @@ function validate(step){
 function inferPairFromCountries(senderCountry, receiverCountry){
   if (senderCountry === 'US' && receiverCountry === 'PY') return 'USD/PYG';
   if (senderCountry === 'PY' && receiverCountry === 'US') return 'PYG/USD';
-  // fallback por si acaso
   return 'USD/PYG';
 }
 
@@ -640,6 +694,28 @@ async function recalcPrices(){
     });
 
     recalcTotals();
+
+    // Si ya tenemos FX precargado desde loadFxGoods,
+    // precomputamos también amounts para GOODS.
+    if (state.fx_rate_goods) {
+      const rate = state.fx_rate_goods;
+      const diffUsd = totalPrecio - totalCosto;
+      state.goods_amounts = {
+        base: {
+          usd: totalCosto,
+          pyg: totalCosto * rate
+        },
+        fee: {
+          usd: diffUsd,
+          pyg: diffUsd * rate
+        },
+        total: {
+          usd: totalPrecio,
+          pyg: totalPrecio * rate
+        }
+      };
+    }
+
     if (cur === 4) renderHumanReview();
     return;
   }
@@ -672,30 +748,60 @@ async function recalcPrices(){
       throw new Error('Formato de respuesta inválido');
     }
 
-    const quote = node.quote; // { base, fee_amount, fee_type, fees_available, total }
+    const quote = node.quote; // { base, fee_amount, fee_type, fees_available, total, fx? }
+
+    // 1) Repartir el total USD a los items
     const totalPrecio = Number(quote.total || 0);
     const totalCosto  = itemsTotal;
     const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
 
     const rows = Array.from(tbody.querySelectorAll('tr'));
     rows.forEach((row, i)=>{
-      const costUnit = Number(row.querySelector('.in-cost').value || 0);
+      const costUnit  = Number(row.querySelector('.in-cost').value || 0);
       const priceUnit = costUnit * factor;
       row.querySelector('.in-price').value = priceUnit.toFixed(2);
       state.items[i].price_usd = priceUnit;
     });
 
     recalcTotals();
+
+    // 2) Capturar FX igual que en REMIT, si el backend lo devuelve
+    const fxObj = node.fx || quote.fx || null;
+    if (fxObj && fxObj.rate != null) {
+      const rate = Number(fxObj.rate);
+      state.fx_rate_goods = rate;
+      state.fx_goods_date = fxObj.date || new Date().toISOString().slice(0,10);
+      state.fx_goods_pair = fxObj.pair || 'USD/PYG';
+
+      const diffUsd = totalPrecio - totalCosto;
+      state.goods_amounts = {
+        base: {
+          usd: totalCosto,
+          pyg: totalCosto * rate
+        },
+        fee: {
+          usd: diffUsd,
+          pyg: diffUsd * rate
+        },
+        total: {
+          usd: totalPrecio,
+          pyg: totalPrecio * rate
+        }
+      };
+    }
+
+    if (cur === 4) renderHumanReview();
   } catch (e){
     console.error('recalcPrices error:', e);
     toast('No se pudieron calcular los precios');
   }
 }
 
+
 function recalcTotals(){
   const rows = Array.from(tbody.querySelectorAll('tr'));
   let sumQty=0, sumCost=0, sumPrice=0;
-  rows.forEach((r,i)=>{
+  rows.forEach(r=>{
     const qty   = Number(r.querySelector('.in-qty').value || 0);
     const cost  = Number(r.querySelector('.in-cost').value || 0);
     const price = Number(r.querySelector('.in-price').value || 0);
@@ -721,10 +827,8 @@ function updateRemitQuoteUI(quote){
   const senderName   = state.sender.name || 'Remitente';
   const receiverName = state.receiver.name || 'Receptor';
 
-  // Descripción
   document.getElementById('remit-desc-names').innerText = `${senderName} → ${receiverName}`;
 
-  // Input de monto + totales de monto
   const $amtInput = document.getElementById('remit-amount');
   if($amtInput && !$amtInput.matches(':focus')){
     $amtInput.value = amt ? amt.toFixed(2) : '';
@@ -743,29 +847,30 @@ function updateRemitQuoteUI(quote){
     return;
   }
 
-  // Estructura del backend:
-  // {
-  //   fx: { date, pair, rate },
-  //   base_py,
-  //   fees_available,
-  //   fee_type,
-  //   fee_amount,
-  //   total_py
-  // }
   const fxObj   = quote.fx || {};
   const fxRate  = Number(fxObj.rate || quote.fx_rate || 0);
+  const basePy  = Number(quote.base_py || 0);
   const feePy   = Number(quote.fee_amount || 0);
   const totalPy = Number(quote.total_py || 0);
 
-  // Fee en USD y total en USD
+  const baseUsd  = Number(state.amount_usd || 0);
   const feeUsd   = fxRate ? (feePy / fxRate) : 0;
-  const totalUsd = amt + feeUsd;
+  const totalUsd = baseUsd + feeUsd;
 
-  state.fx_rate               = fxRate || null;
+  state.fx_rate = fxRate || null;
+  state.fx_date = fxObj.date || null;
+  state.fx_pair = fxObj.pair || inferPairFromCountries(state.sender.country, state.receiver.country);
+
   state.remit_fee_amount      = feeUsd;
   state.remit_fee_currency    = 'USD';
   state.remit_total_charge    = totalUsd;
   state.remit_currency_charge = 'USD';
+
+  state.remit_breakdown_py = {
+    base_py: basePy,
+    fee_py:  feePy,
+    total_py: totalPy
+  };
 
   document.getElementById('remit-col-fx').innerText         = fxRate ? fxRate.toFixed(2) : '-';
   document.getElementById('remit-col-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
@@ -788,10 +893,8 @@ async function recalcRemit(){
     return;
   }
 
-  // definimos par según países
   const pair = inferPairFromCountries(state.sender.country, state.receiver.country);
 
-  // ---> mapear fee_mode a fee_type + override
   let feeType;
   let feeOverride = null;
   if (state.fee_mode === 'PCT') {
@@ -799,7 +902,6 @@ async function recalcRemit(){
   } else if (state.fee_mode === 'FIX') {
     feeType = 2;
   } else {
-    // NONE: sin fee, forzamos override en 0
     feeType = 0;
     feeOverride = { fee_pct: 0, fee_flat: 0 };
   }
@@ -810,7 +912,7 @@ async function recalcRemit(){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         kind: 'REMIT',
-        customer_id: 1,          // luego lo parametrizás
+        customer_id: 1,
         amount_usd: state.amount_usd,
         pair: pair,
         fee_type: feeType,
@@ -967,44 +1069,168 @@ document.getElementById('btn-create').addEventListener('click', async ()=>{
   }
 });
 
-function buildPayload(){
-  const base = { case_type: state.case_type, notify: state.notify || 'BOTH' };
-  if(state.notes) base.notes = state.notes;
+/* ===== buildPayload: meta ESTÁNDAR ===== */
+function buildPayload() {
+  // Común: kind, notify, fee_mode, notes
+  var meta = {
+    kind:     state.case_type,
+    notify:   state.notify || 'BOTH',
+    fee_mode: state.fee_mode,
+    notes:    state.notes || null
+  };
 
-  if(state.case_type==='GOODS'){
-    base.customer = { name: state.customer.name, phone: state.customer.phone };
-    base.destination = { country: state.destination.country || 'PY' };
-    base.items = state.items.map(x=>({
-      description: x.description,
-      qty: Number(x.qty||1),
-      cost_usd: Number(x.cost_usd||0),
-      price_usd: Number(x.price_usd||0)
-    }));
-    base.fee_mode = state.fee_mode;
-    if (state.shipping.enabled){
-      base.shipping = { amount: state.shipping.amount, currency: state.shipping.currency };
-    }
+  // Siempre definimos sender/receiver en meta
+  if (state.case_type === 'GOODS') {
+    meta.sender = {
+      name:    state.customer.name,
+      phone:   state.customer.phone,
+      country: state.destination.country || 'PY'
+    };
+    meta.receiver = null;
   } else {
-    base.sender   = { name: state.sender.name, phone: state.sender.phone, country: state.sender.country };
-    base.receiver = { name: state.receiver.name, phone: state.receiver.phone, country: state.receiver.country };
-    base.amount_usd = Number(state.amount_usd || 0);
-    base.fee_mode   = state.fee_mode;
-    
-    if(state.fx_rate != null) base.fx_rate = state.fx_rate;
-    if(state.remit_total_charge != null){
-      base.total_charge = {
-        amount: state.remit_total_charge,
-        currency: state.remit_currency_charge
-      };
-    }
-    if(state.remit_fee_amount != null){
-      base.fee_amount = {
-        amount: state.remit_fee_amount,
-        currency: state.remit_fee_currency
-      };
-    }
+    meta.sender = {
+      name:    state.sender.name,
+      phone:   state.sender.phone,
+      country: state.sender.country
+    };
+    meta.receiver = {
+      name:    state.receiver.name,
+      phone:   state.receiver.phone,
+      country: state.receiver.country
+    };
   }
-  return base;
+
+  // Normalizamos amounts y bloques goods/remit
+  if (state.case_type === 'GOODS') {
+    /* ---------- GOODS ---------- */
+    // Totales en USD
+    var totalCostUsd  = 0;
+    var totalPriceUsd = 0;
+
+    const items = (state.items || []).map(function (x) {
+      var qty   = Number(x.qty       || 0);
+      var cost  = Number(x.cost_usd  || 0);
+      var price = Number(x.price_usd || 0);
+
+      totalCostUsd  += qty * cost;
+      totalPriceUsd += qty * price;
+
+      return {
+        description: x.description,
+        qty:         qty,
+        cost_usd:    cost,
+        price_usd:   price
+      };
+    });
+
+    const diffUsd = totalPriceUsd - totalCostUsd;
+
+    // FX para GOODS (si la tenemos)
+    var fxRateGoods = state.fx_rate_goods || null;
+    var fxDateGoods = state.fx_goods_date || new Date().toISOString().slice(0,10);
+    var fxPairGoods = state.fx_goods_pair || 'USD/PYG';
+
+    meta.fx = {
+      date: fxDateGoods,
+      pair: fxPairGoods,
+      rate: fxRateGoods
+    };
+
+    // amounts: base / fee / total en ambas monedas
+    if (fxRateGoods) {
+      meta.amounts = {
+        base: {
+          usd: totalCostUsd,
+          pyg: totalCostUsd * fxRateGoods
+        },
+        fee: {
+          usd: diffUsd,
+          pyg: diffUsd * fxRateGoods
+        },
+        total: {
+          usd: totalPriceUsd,
+          pyg: totalPriceUsd * fxRateGoods
+        }
+      };
+    } else {
+      // Sin FX (falló endpoint): guardamos igual en USD
+      meta.amounts = {
+        base:  { usd: totalCostUsd,  pyg: 0 },
+        fee:   { usd: diffUsd,       pyg: 0 },
+        total: { usd: totalPriceUsd, pyg: 0 }
+      };
+    }
+
+    // Bloque específico GOODS
+    meta.goods = {
+      destination: {
+        country: state.destination.country || 'PY'
+      },
+      shipping: {
+        enabled:  !!state.shipping.enabled,
+        amount:   Number(state.shipping.amount || 0),
+        currency: state.shipping.currency || 'USD'
+      },
+      items: items
+    };
+
+    // REMIT no aplica
+    meta.remit = null;
+
+  } else {
+    /* ---------- REMIT ---------- */
+    var baseUsd  = Number(state.amount_usd || 0);
+    var feeUsd   = Number(state.remit_fee_amount || 0);
+    var totalUsd = Number(state.remit_total_charge || 0);
+
+    var fxRateRemit = state.fx_rate || null;
+    var fxDateRemit = state.fx_date || new Date().toISOString().slice(0,10);
+    var fxPairRemit = state.fx_pair || inferPairFromCountries(state.sender.country, state.receiver.country);
+
+    meta.fx = {
+      date: fxDateRemit,
+      pair: fxPairRemit,
+      rate: fxRateRemit
+    };
+
+    var bp     = state.remit_breakdown_py || {};
+    var basePy = Number(bp.base_py || 0);
+    var feePy  = Number(bp.fee_py  || 0);
+    var totPy  = Number(bp.total_py|| 0);
+
+    if (fxRateRemit) {
+      meta.amounts = {
+        base:  { usd: baseUsd,  pyg: basePy },
+        fee:   { usd: feeUsd,   pyg: feePy  },
+        total: { usd: totalUsd, pyg: totPy  }
+      };
+    } else {
+      meta.amounts = {
+        base:  { usd: baseUsd,  pyg: 0 },
+        fee:   { usd: feeUsd,   pyg: 0 },
+        total: { usd: totalUsd, pyg: 0 }
+      };
+    }
+
+    // Bloque específico REMIT
+    const direction = `${state.sender.country || 'US'}→${state.receiver.country || 'PY'}`;
+    meta.remit = {
+      amount_usd: baseUsd,
+      direction:  direction
+    };
+
+    // GOODS no aplica
+    meta.goods = null;
+  }
+
+  // Payload final hacia backend
+  return {
+    case_type:   state.case_type,
+    customer_id: 2,  // placeholder
+    contact_id:  1,  // placeholder
+    title:       (state.case_type === 'GOODS') ? 'GOODS Selva' : 'REMIT Selva',
+    meta:        meta
+  };
 }
 
 /* ===== Init ===== */
@@ -1024,6 +1250,7 @@ document.getElementById('remit-amount').addEventListener('input', async ()=>{
 updateStepper();
 syncFromUI(1);
 loadShipping();
+loadFxGoods();
 </script>
 
 {% endblock %}

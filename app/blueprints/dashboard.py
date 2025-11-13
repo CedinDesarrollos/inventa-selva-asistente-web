@@ -61,7 +61,7 @@ def index():
     # 1) Casos
     r_cases = get("/api/cases", headers=headers)
     cases_raw = (r_cases.json() or {}).get("items", []) if getattr(r_cases, "ok", False) else []
-    print(f"Cases Raw: {cases_raw}")
+    
 
     # 2) SLA
     r_sla = get("/api/cases/sla-breaches", headers=headers)

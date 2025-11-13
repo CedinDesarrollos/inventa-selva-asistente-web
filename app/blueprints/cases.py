@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, abort
 from ..utils.api import get, post
 from ..utils.auth import auth_header
 
@@ -14,8 +14,13 @@ def list_cases():
 @bp.get("/<int:case_id>")
 def detail(case_id):
     token = request.cookies.get("jwt")
-    data = get(f"/api/cases/{case_id}", headers=auth_header(token)).json()
-    return render_template("cases/detail.html", c=data)
+    resp = get(f"/api/cases/{case_id}", headers=auth_header(token))
+    data = resp.json()
+    print(f"Payload del evento: {data}")
+    if not data.get("ok"):
+        abort(resp.status_code)
+    case = data["case"]
+    return render_template("cases/detail.html", c=case)
 
 @bp.post("/<int:case_id>/event")
 def add_event(case_id):
@@ -65,77 +70,74 @@ def create_case():
     """
     Adapta el payload del wizard al contrato del backend Railway:
       {
-        "case_type": "GOODS",
+        "case_type": "GOODS" | "REMIT",
         "customer_id": 1,
         "contact_id": 1,
-        "title": "iPhone 15 128GB Blue",
-        "meta": {
-          "items": [{"sku":"iphone15-blue","qty":1,"usd":900}],
-          "shipping_usd": 80
-        },
-        "fee_override_json": {"fee_pct": 0, "fee_flat": 0}   # opcional
+        "title": "...",
+        "meta": { ... },
+        "fee_override_json": {...}   # opcional
       }
     """
     token = request.cookies.get("jwt")
     src = request.get_json(force=True) or {}
 
     # ---- 1) Campos base
-    case_type = src.get("case_type", "GOODS")
-
-    # En tu MVP no tenés un selector real de cliente/contacto.
-    # Usa IDs por defecto o permite que vengan del front si los tenés.
+    case_type   = src.get("case_type", "GOODS")
     customer_id = src.get("customer_id") or 1
     contact_id  = src.get("contact_id")  or 1
+    title       = src.get("title")
 
-    # ---- 2) Title: del primer ítem o fallback
-    title = src.get("title")
+    # ---- 2) Title fallback si no vino desde el front
     if not title:
         first_desc = (src.get("items") or [{}])[0].get("description", "").strip()
         title = first_desc or f"{case_type} Selva"
 
-    # ---- 3) Meta.items: mapear a {sku, qty, usd}
-    items_src = src.get("items") or []
-    items_meta = []
-    for i, it in enumerate(items_src, start=1):
-        desc = (it.get("description") or f"item-{i}").strip()
-        qty  = int(it.get("qty") or 1)
-        # usd: precio final. Si no hay, usar cost_usd.
-        usd  = float(it.get("price_usd") or it.get("cost_usd") or 0)
-        # sku: un slug simple; si no querés, podés dejarlo como desc.
-        sku  = (desc.lower()
-                    .replace(" ", "-")
-                    .replace("/", "-")
-                    .replace("--", "-"))[:60] or f"item-{i}"
-        items_meta.append({"sku": sku, "qty": qty, "usd": usd})
+    # ---- 3) META: preferir lo que manda el wizard
+    meta = src.get("meta")
+    fee_override = src.get("fee_override_json")
 
-    meta = {"items": items_meta}
+    if meta is None:
+        # ====== MODO LEGACY (para clientes viejos que no envían meta) ======
+        items_src = src.get("items") or []
+        items_meta = []
+        for i, it in enumerate(items_src, start=1):
+            desc = (it.get("description") or f"item-{i}").strip()
+            qty  = int(it.get("qty") or 1)
+            usd  = float(it.get("price_usd") or it.get("cost_usd") or 0)
+            sku  = (desc.lower()
+                        .replace(" ", "-")
+                        .replace("/", "-")
+                        .replace("--", "-"))[:60] or f"item-{i}"
+            items_meta.append({"sku": sku, "qty": qty, "usd": usd})
 
-    # ---- 4) Shipping (del toggle del paso 1)
-    shipping = src.get("shipping") or {}
-    ship_amount = float(shipping.get("amount") or 0)
-    if ship_amount > 0:
-        meta["shipping_usd"] = ship_amount
+        meta = {"items": items_meta}
 
-    # ---- 5) Fee override (solo si modo NONE)
-    fee_override = None
-    if src.get("fee_mode") == "NONE":
-        fee_override = {"fee_pct": 0, "fee_flat": 0}
+        # Shipping legacy
+        shipping = src.get("shipping") or {}
+        ship_amount = float(shipping.get("amount") or 0)
+        if ship_amount > 0:
+            meta["shipping_usd"] = ship_amount
 
+        # Fee override legacy (si no vino explícito)
+        if fee_override is None and src.get("fee_mode") == "NONE":
+            fee_override = {"fee_pct": 0, "fee_flat": 0}
+
+    # ---- 4) Construir body final para el backend real
     backend_body = {
-        "case_type": case_type,
+        "case_type":   case_type,
         "customer_id": customer_id,
-        "contact_id": contact_id,
-        "title": title,
-        "meta": meta,
+        "contact_id":  contact_id,
+        "title":       title,
+        "meta":        meta,
     }
     if fee_override is not None:
         backend_body["fee_override_json"] = fee_override
 
-    # ---- 6) Llamada al backend
+    # ---- 5) Llamada al backend
     headers = auth_header(token) if token else {}
     r = post("/api/cases", json=backend_body, headers=headers)
 
-    # ---- 7) Respuesta robusta (evita 500 si el upstream no retorna JSON)
+    # ---- 6) Respuesta robusta (evita 500 si el upstream no retorna JSON)
     try:
         data = r.json()
         return jsonify(data), r.status_code

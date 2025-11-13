@@ -1,47 +1,536 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row g-3">
-  <div class="col-lg-8">
-    <div class="card shadow-sm">
-      <div class="card-header">Caso #{{ c.id }}</div>
-      <div class="card-body">
-        <div class="mb-2"><b>Tipo:</b> {{ c.case_type }}</div>
-        <div class="mb-2"><b>Estado:</b> <span id="lbl-state">{{ c.state }}</span></div>
-        <button class="btn btn-outline-primary btn-sm" id="btn-advance">Cambiar estado</button>
-      </div>
-    </div>
 
-    <div class="card shadow-sm mt-3">
-      <div class="card-header">Cotización</div>
-      <div class="card-body">
-        <div class="row g-2 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label">Tipo</label>
-            <select id="q-kind" class="form-select">
-              <option value="GOODS">GOODS</option>
-              <option value="REMIT">REMIT</option>
-            </select>
-          </div>
-          <div class="col-md-8">
-            <label class="form-label">Payload JSON</label>
-            <textarea id="q-payload" class="form-control" rows="3">{}</textarea>
-          </div>
-        </div>
-        <button class="btn btn-primary mt-2" id="btn-quote">Cotizar</button>
-        <pre class="mt-2 small" id="q-out"></pre>
-      </div>
+<style>
+  .case-header-card{
+    border:0;
+    border-radius:1rem;
+    box-shadow:0 8px 24px rgba(15,23,42,.08);
+    background:linear-gradient(135deg,#ffffff,#f8fafc);
+  }
+  .badge-case-type{
+    padding:.25rem .6rem;
+    border-radius:999px;
+    font-size:.75rem;
+    font-weight:600;
+  }
+  .badge-case-type.goods{ background:#ecfdf5; color:#047857; }
+  .badge-case-type.remit{ background:#eff6ff; color:#1d4ed8; }
+
+  .pill-state{
+    padding:.25rem .7rem;
+    border-radius:999px;
+    font-size:.75rem;
+    font-weight:600;
+    background:#e5e7eb;
+    color:#374151;
+  }
+  .pill-state.NUEVO{ background:#e0f2fe; color:#0369a1; }
+  .pill-state.EN_PROCESO{ background:#fef3c7; color:#92400e; }
+  .pill-state.COMPLETADO{ background:#dcfce7; color:#166534; }
+  .pill-state.CANCELADO{ background:#fee2e2; color:#b91c1c; }
+
+  .label-soft{
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#94a3b8;
+  }
+
+  .summary-box{
+    border-radius:.75rem;
+    background:#f8fafc;
+    padding:.75rem 1rem;
+    border:1px dashed #e2e8f0;
+  }
+
+  .timeline{
+    border-left:2px solid #e5e7eb;
+    margin-left:.5rem;
+    padding-left:1rem;
+  }
+  .timeline-item{
+    position:relative;
+    margin-bottom:.75rem;
+  }
+  .timeline-item::before{
+    content:"";
+    position:absolute;
+    left:-1.05rem;
+    top:.3rem;
+    width:.6rem;
+    height:.6rem;
+    border-radius:999px;
+    background:#0f766e;
+    box-shadow:0 0 0 3px #ecfdf5;
+  }
+  .timeline-time{
+    font-size:.75rem;
+    color:#6b7280;
+  }
+  .timeline-state{
+    font-weight:600;
+    font-size:.85rem;
+  }
+
+  .chip-attachment-kind{
+    display:inline-block;
+    padding:.15rem .5rem;
+    border-radius:999px;
+    font-size:.7rem;
+    background:#eff6ff;
+    color:#1d4ed8;
+  }
+
+  .small-muted{
+    font-size:.8rem;
+    color:#6b7280;
+  }
+
+  .table-items thead{
+    background:#f1f5f9;
+  }
+  .table-items th{
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#64748b;
+  }
+
+  .flag-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.1rem .45rem;
+    border-radius:999px;
+    background:#e5e7eb;
+    font-size:.8rem;
+  }
+  .flag-pill img.flag-icon{
+    width:18px;
+    height:12px;
+    border-radius:2px;
+    object-fit:cover;
+    box-shadow:0 0 0 1px rgba(15,23,42,.15);
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <div class="label-soft mb-1">Detalle de caso</div>
+    <h3 class="mb-1">
+      {{ c.title or 'Caso sin título' }}
+    </h3>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      {% set kind = (c.case_type or c.type or '') %}
+      <span class="badge-case-type {% if kind=='GOODS' %}goods{% else %}remit{% endif %}">
+        {{ kind }}
+      </span>
+
+      <span class="pill-state {{ c.state }}" id="lbl-state">
+        {{ c.state }}
+      </span>
+
+      <span class="small-muted">
+        Código: <strong>{{ c.code }}</strong>
+      </span>
+
+      <span class="small-muted">
+        Creado: {{ c.created_at[:10] if c.created_at }}
+      </span>
+      {% if c.updated_at %}
+        <span class="small-muted">
+          · Actualizado: {{ c.updated_at[:10] }}
+        </span>
+      {% endif %}
     </div>
   </div>
 
-  <div class="col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-header">Adjuntos</div>
+  <div class="d-flex flex-column align-items-end gap-2">
+    <button class="btn btn-sm btn-outline-primary" id="btn-advance">
+      Cambiar estado
+    </button>
+  </div>
+</div>
+
+<div class="row g-3">
+
+  <!-- Columna izquierda -->
+  <div class="col-lg-8">
+
+    <!-- Resumen principal -->
+    <div class="card case-header-card mb-3">
       <div class="card-body">
-        <input class="form-control" type="file" id="file" />
-        <button class="btn btn-secondary mt-2" id="btn-upload">Subir</button>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="label-soft mb-1">Cliente</div>
+            {% if c.customer %}
+              <div class="fw-semibold">{{ c.customer.name }}</div>
+              <div class="small-muted">
+                📧 {{ c.customer.email or 'Sin email' }} · 📱 {{ c.customer.phone or 'Sin teléfono' }}
+              </div>
+            {% else %}
+              <div class="small-muted">Sin datos de cliente</div>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <div class="label-soft mb-1">Contacto adicional</div>
+            {% if c.contact %}
+              <div class="fw-semibold">
+                {{ c.contact.name }}
+                {% if c.contact.relation %}
+                  <span class="text-muted small">({{ c.contact.relation }})</span>
+                {% endif %}
+              </div>
+              <div class="small-muted">
+                📧 {{ c.contact.email or 'Sin email' }} · 📱 {{ c.contact.phone or 'Sin teléfono' }}
+              </div>
+            {% else %}
+              <div class="small-muted">Sin contacto asociado</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Resumen</span>
+        {% if c.meta and c.meta.notify %}
+          <span class="small-muted">Notificación: {{ c.meta.notify }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+
+        {% set meta = c.meta or {} %}
+        {% set kind = meta.kind or c.case_type or c.type %}
+
+        {% if kind == 'GOODS' %}
+          {# ================== GOODS ================== #}
+
+          {# 3.1 – Origen – Destino #}
+          <div class="summary-box mb-3">
+            <div class="label-soft mb-1">Origen – Destino</div>
+
+            {# (Más adelante podés volver a hacerlo dinámico) #}
+            {% set orig_country = 'US' %}
+            {% set dest_country = 'PY' %}
+
+            {% set orig_flag_file = 'img/flags/us.svg' %}
+            {% if orig_country == 'PY' %}
+              {% set orig_flag_file = 'img/flags/py.svg' %}
+            {% endif %}
+
+            {% set dest_flag_file = 'img/flags/py.svg' %}
+            {% if dest_country == 'US' %}
+              {% set dest_flag_file = 'img/flags/us.svg' %}
+            {% endif %}
+
+            <div class="fw-semibold mb-1 d-flex align-items-center gap-2">
+              <span class="flag-pill">
+                <img src="{{ url_for('static', filename=orig_flag_file) }}"
+                     alt="{{ orig_country }}" class="flag-icon">
+                {{ orig_country }}
+              </span>
+              <span class="mx-1">→</span>
+              <span class="flag-pill">
+                <img src="{{ url_for('static', filename=dest_flag_file) }}"
+                     alt="{{ dest_country }}" class="flag-icon">
+                {{ dest_country }}
+              </span>
+            </div>
+          </div>
+
+          {# 3.2 – Tabla de ítems #}
+          <div class="mb-3">
+            <div class="label-soft mb-1">Items</div>
+            {% if meta.goods and 'items' in meta.goods %}
+              <div class="summary-box p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm table-items mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th class="text-end">Cant.</th>
+                        <th class="text-end">Costo USD</th>
+                        <th class="text-end">Precio USD</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for it in meta.goods['items'] %}
+                        <tr>
+                          <td>{{ it.description }}</td>
+                          <td class="text-end">{{ it.qty }}</td>
+                          <td class="text-end">{{ it.cost_usd|numfmt(2) }}</td>
+                          <td class="text-end">{{ it.price_usd|numfmt(2) }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            {% else %}
+              <div class="summary-box">
+                <div class="small-muted">Sin items cargados.</div>
+              </div>
+            {% endif %}
+          </div>
+
+          {# 3.3 – Totales #}
+          <div class="mb-2">
+            <div class="label-soft mb-1">Totales</div>
+            <div class="summary-box">
+              {% if meta.amounts %}
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <div class="small-muted mb-1 fw-semibold">En USD</div>
+                    <div class="d-flex justify-content-between small-muted">
+                      <span>Base:</span>
+                      <span>{{ meta.amounts.base.usd|numfmt(2) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small-muted">
+                      <span>Fee:</span>
+                      <span>{{ meta.amounts.fee.usd|numfmt(2) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small-muted">
+                      <span>Total:</span>
+                      <span>{{ meta.amounts.total.usd|numfmt(2) }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="small-muted mb-1 fw-semibold">En Gs</div>
+                    <div class="d-flex justify-content-between small-muted">
+                      <span>Base:</span>
+                      <span>{{ meta.amounts.base.pyg|numfmt(0) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small-muted">
+                      <span>Fee:</span>
+                      <span>{{ meta.amounts.fee.pyg|numfmt(0) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small-muted">
+                      <span>Total:</span>
+                      <span>{{ meta.amounts.total.pyg|numfmt(0) }}</span>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if meta.goods and meta.goods.shipping %}
+                <hr class="my-2">
+                <div class="d-flex justify-content-between small-muted">
+                  <span>Shipping:</span>
+                  <span>
+                    {{ meta.goods.shipping.amount|numfmt(2) }}
+                    {{ meta.goods.shipping.currency }}
+                    · {{ 'Incluido' if meta.goods.shipping.enabled else 'No incluido' }}
+                  </span>
+                </div>
+              {% endif %}
+
+              {% if meta.fx %}
+                <hr class="my-2">
+                <div class="small-muted">
+                  Cotización {{ meta.fx.pair }} @ {{ meta.fx.rate|numfmt(0) }} ({{ meta.fx.date }})
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if meta.notes %}
+            <hr>
+            <div class="label-soft mb-1">Notas</div>
+            <div>{{ meta.notes }}</div>
+          {% endif %}
+
+        {% else %}
+          {# ================== REMIT ================== #}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="summary-box mb-3">
+                <div class="label-soft mb-1">Remitente</div>
+                {% if meta.sender %}
+                  {% set sender_country = meta.sender.country or 'US' %}
+                  {% set sender_flag_file = 'img/flags/us.svg' %}
+                  {% if sender_country == 'PY' %}
+                    {% set sender_flag_file = 'img/flags/py.svg' %}
+                  {% endif %}
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="fw-semibold">{{ meta.sender.name }}</div>
+                    <span class="flag-pill">
+                      <img src="{{ url_for('static', filename=sender_flag_file) }}"
+                           alt="{{ sender_country }}" class="flag-icon">
+                      {{ sender_country }}
+                    </span>
+                  </div>
+                  <div class="small-muted">
+                    📱 {{ meta.sender.phone }}{% if meta.sender.country %} · 🌎 {{ meta.sender.country }}{% endif %}
+                  </div>
+                {% else %}
+                  <div class="small-muted">Sin datos de remitente.</div>
+                {% endif %}
+              </div>
+
+              <div class="summary-box">
+                <div class="label-soft mb-1">Destinatario</div>
+                {% if meta.receiver %}
+                  {% set receiver_country = meta.receiver.country or 'PY' %}
+                  {% set receiver_flag_file = 'img/flags/py.svg' %}
+                  {% if receiver_country == 'US' %}
+                    {% set receiver_flag_file = 'img/flags/us.svg' %}
+                  {% endif %}
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="fw-semibold">{{ meta.receiver.name }}</div>
+                    <span class="flag-pill">
+                      <img src="{{ url_for('static', filename=receiver_flag_file) }}"
+                           alt="{{ receiver_country }}" class="flag-icon">
+                      {{ receiver_country }}
+                    </span>
+                  </div>
+                  <div class="small-muted">
+                    📱 {{ meta.receiver.phone }}{% if meta.receiver.country %} · 🌎 {{ meta.receiver.country }}{% endif %}
+                  </div>
+                {% else %}
+                  <div class="small-muted">Sin datos de destinatario.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="summary-box mb-3">
+                <div class="label-soft mb-1">Montos</div>
+                <div class="small-muted">Monto enviado (USD)</div>
+                <div class="fw-semibold fs-5 mb-2">
+                  {{ (meta.amount_usd or (meta.amounts.base.usd if meta.amounts and meta.amounts.base else 0))|numfmt(2) }}
+                </div>
+
+                {% if meta.amounts %}
+                  <div class="d-flex justify-content-between small-muted">
+                    <span>Base PY:</span>
+                    <span>{{ meta.amounts.base.pyg|numfmt(0) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between small-muted">
+                    <span>Fee PY:</span>
+                    <span>{{ meta.amounts.fee.pyg|numfmt(0) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between small-muted">
+                    <span>Total PY:</span>
+                    <span>{{ meta.amounts.total.pyg|numfmt(0) }}</span>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="summary-box">
+                <div class="label-soft mb-1">FX & Fee</div>
+                {% if meta.fx %}
+                  <div class="small-muted">
+                    Par: {{ meta.fx.pair }} · Fecha: {{ meta.fx.date }}
+                  </div>
+                  <div class="small-muted">
+                    Tasa: <strong>{{ meta.fx.rate|numfmt(0) }}</strong>
+                  </div>
+                {% endif %}
+                {% if meta.fee_mode %}
+                  <div class="small-muted mt-1">
+                    Modo fee: <strong>{{ meta.fee_mode }}</strong>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {% if meta.notes %}
+            <hr>
+            <div class="label-soft mb-1">Notas</div>
+            <div>{{ meta.notes }}</div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Historial de estados -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header">Historial de estado</div>
+      <div class="card-body">
+        {% if c.events and c.events|length %}
+          <div class="timeline">
+            {% for e in c.events %}
+              <div class="timeline-item">
+                <div class="timeline-state">
+                  {{ e.prev_state or '—' }} → {{ e.new_state }}
+                </div>
+                <div class="timeline-time">
+                  {{ e.created_at.replace('T',' ')[:16] }} · {{ e.actor or 'system' }}
+                </div>
+                {% if e.payload %}
+                  <div class="small-muted">
+                    {{ e.payload }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="small-muted">Sin eventos registrados todavía.</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Columna derecha -->
+  <div class="col-lg-4">
+
+    <!-- Adjuntos -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Adjuntos</span>
+      </div>
+      <div class="card-body">
+        {% if c.attachments and c.attachments|length %}
+          <ul class="list-unstyled mb-3" id="attachments-list">
+            {% for a in c.attachments %}
+              <li class="mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    {% if a.kind %}
+                      <span class="chip-attachment-kind">{{ a.kind }}</span>
+                    {% endif %}
+                    <div class="small">
+                      {% if a.url %}
+                        <a href="{{ a.url }}" target="_blank" rel="noopener">
+                          {{ a.key }}
+                        </a>
+                      {% else %}
+                        {{ a.key }}
+                      {% endif %}
+                    </div>
+                    <div class="small-muted">
+                      {{ a.created_at.replace('T',' ')[:16] }}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="small-muted mb-2" id="attachments-empty">
+            Aún no hay adjuntos.
+          </div>
+          <ul class="list-unstyled mb-3 d-none" id="attachments-list"></ul>
+        {% endif %}
+
+        <hr>
+        <label class="form-label small">Subir nuevo adjunto</label>
+        <input class="form-control form-control-sm" type="file" id="file" />
+        <button class="btn btn-sm btn-secondary mt-2 w-100" id="btn-upload">
+          Subir adjunto
+        </button>
         <div id="up-out" class="small mt-2 text-muted"></div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -53,32 +542,40 @@ document.getElementById('btn-advance').onclick = async () => {
   if(!next) return;
   const r = await appPost(`/cases/${CASE_ID}/event`, { event: next });
   toast(JSON.stringify(r, null, 2));
-  if(r.new_state){ document.getElementById('lbl-state').innerText = r.new_state; }
-};
-
-document.getElementById('btn-quote').onclick = async () => {
-  const kind = document.getElementById('q-kind').value;
-  let payload = {};
-  try { payload = JSON.parse(document.getElementById('q-payload').value || "{}"); }
-  catch { return toast('JSON inválido en payload'); }
-  payload.kind = kind;
-  const r = await appPost(`/cases/quote`, payload);
-  document.getElementById('q-out').innerText = JSON.stringify(r, null, 2);
+  if(r.new_state){
+    const lbl = document.getElementById('lbl-state');
+    lbl.innerText = r.new_state;
+    lbl.className = 'pill-state ' + r.new_state;
+  }
 };
 
 document.getElementById('btn-upload').onclick = async () => {
   const f = document.getElementById('file').files[0];
   if(!f) return toast('Seleccioná un archivo');
-  const presign = await appPostRaw(`/api/cases/${CASE_ID}/attachments/presign`, {
-    filename: f.name, content_type: f.type || 'application/octet-stream'
-  });
+  try {
+    const presign = await appPostRaw(`/api/cases/${CASE_ID}/attachments/presign`, {
+      filename: f.name,
+      content_type: f.type || 'application/octet-stream'
+    });
 
-  // PUT binario directo al R2/S3
-  await fetch(presign.upload_url, { method:'PUT', headers: {'Content-Type': f.type}, body: f });
+    await fetch(presign.upload_url, {
+      method:'PUT',
+      headers: {'Content-Type': f.type || 'application/octet-stream'},
+      body: f
+    });
 
-  const commit = await appPostRaw(`/api/cases/${CASE_ID}/attachments/commit`, { key: presign.final_key });
-  document.getElementById('up-out').innerText = 'Adjunto subido: ' + JSON.stringify(commit);
-  toast('Adjunto subido ✔');
+    const commit = await appPostRaw(`/api/cases/${CASE_ID}/attachments/commit`, {
+      key: presign.final_key
+    });
+
+    document.getElementById('up-out').innerText =
+      'Adjunto subido: ' + JSON.stringify(commit);
+
+    toast('Adjunto subido ✔');
+  } catch(err){
+    console.error(err);
+    toast('Error subiendo adjunto');
+  }
 };
 </script>
 {% endblock %}
