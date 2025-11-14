@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify, abort
-from ..utils.api import get, post
+from ..utils.api import get, post, patch
 from ..utils.auth import auth_header
 
 bp = Blueprint("cases", __name__, template_folder="../templates")
+
 
 @bp.get("/")
 def list_cases():
@@ -145,3 +146,28 @@ def create_case():
         return (r.text or "", r.status_code, {
             "Content-Type": r.headers.get("Content-Type", "text/plain")
         })
+
+
+@bp.patch("/<int:case_id>")
+def update_case(case_id):
+    """
+    Proxy para actualizar un caso existente en el backend real.
+    Espera un JSON parcial, por ahora al menos: { "meta": { ... } }
+    """
+    token = request.cookies.get("jwt")
+    payload = request.get_json(force=True) or {}
+
+    headers = auth_header(token) if token else {}
+    # Reenviamos como PATCH al backend Railway
+    r = patch(f"/api/cases/{case_id}", json=payload, headers=headers)
+
+    try:
+        data = r.json()
+        return jsonify(data), r.status_code
+    except ValueError:
+        # Respuesta no-JSON (por ejemplo HTML de error)
+        return (
+            r.text or "",
+            r.status_code,
+            {"Content-Type": r.headers.get("Content-Type", "text/plain")}
+        )

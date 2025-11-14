@@ -113,6 +113,13 @@
     object-fit:cover;
     box-shadow:0 0 0 1px rgba(15,23,42,.15);
   }
+
+  /* Inputs pequeños para items */
+  .table-items input.form-control-sm{
+    padding:.1rem .35rem;
+    height: calc(1.5em + .5rem + 2px);
+    font-size:.8rem;
+  }
 </style>
 
 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -146,12 +153,9 @@
     </div>
   </div>
 
-  <div class="d-flex flex-column align-items-end gap-2">
-    <button class="btn btn-sm btn-outline-primary" id="btn-advance">
-      Cambiar estado
-    </button>
-  </div>
+  
 </div>
+
 
 <div class="row g-3">
 
@@ -196,11 +200,25 @@
     <!-- Resumen -->
     <div class="card shadow-sm mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Resumen</span>
+      <span>Resumen</span>
+      <div class="d-flex align-items-center gap-2">
         {% if c.meta and c.meta.notify %}
           <span class="small-muted">Notificación: {{ c.meta.notify }}</span>
         {% endif %}
+
+        <button class="btn btn-sm btn-outline-primary" id="btn-advance">
+          Cambiar estado
+        </button>
+        <button class="btn btn-sm btn-primary" id="btn-save-meta">
+          ✏️ Editar
+        </button>
+        
+  
       </div>
+    </div>
+
+
+      
       <div class="card-body">
 
         {% set meta = c.meta or {} %}
@@ -213,7 +231,6 @@
           <div class="summary-box mb-3">
             <div class="label-soft mb-1">Origen – Destino</div>
 
-            {# (Más adelante podés volver a hacerlo dinámico) #}
             {% set orig_country = 'US' %}
             {% set dest_country = 'PY' %}
 
@@ -242,8 +259,8 @@
             </div>
           </div>
 
-          {# 3.2 – Tabla de ítems #}
-          <div class="mb-3">
+          {# 3.2 – Tabla de ítems (editable) #}
+                    <div class="mb-3">
             <div class="label-soft mb-1">Items</div>
             {% if meta.goods and 'items' in meta.goods %}
               <div class="summary-box p-0">
@@ -257,13 +274,36 @@
                         <th class="text-end">Precio USD</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="goods-items-body">
                       {% for it in meta.goods['items'] %}
-                        <tr>
-                          <td>{{ it.description }}</td>
-                          <td class="text-end">{{ it.qty }}</td>
-                          <td class="text-end">{{ it.cost_usd|numfmt(2) }}</td>
-                          <td class="text-end">{{ it.price_usd|numfmt(2) }}</td>
+                        <tr data-index="{{ loop.index0 }}">
+                          <td>
+                            <span class="view-only">{{ it.description }}</span>
+                            <input class="form-control form-control-sm edit-only d-none in-desc"
+                                   value="{{ it.description }}" disabled>
+                          </td>
+                          <td class="text-end">
+                            <span class="view-only">{{ it.qty }}</span>
+                            <input type="number"
+                                   min="1"
+                                   class="form-control form-control-sm edit-only d-none in-qty"
+                                   value="{{ it.qty }}">
+                          </td>
+                          <td class="text-end">
+                            <span class="view-only">{{ it.cost_usd|numfmt(2) }}</span>
+                            <input type="number"
+                                   step="0.01"
+                                   class="form-control form-control-sm edit-only d-none in-cost"
+                                   value="{{ '%.2f'|format(it.cost_usd) }}">
+                          </td>
+                          <td class="text-end">
+                            <span class="view-only">{{ it.price_usd|numfmt(2) }}</span>
+                            <input type="number"
+                                   step="0.01"
+                                   class="form-control form-control-sm edit-only d-none in-price"
+                                   value="{{ '%.2f'|format(it.price_usd) }}"
+                                   disabled>
+                          </td>
                         </tr>
                       {% endfor %}
                     </tbody>
@@ -277,40 +317,48 @@
             {% endif %}
           </div>
 
-          {# 3.3 – Totales #}
+          {# 3.3 – Totales + Fee editable #}
           <div class="mb-2">
             <div class="label-soft mb-1">Totales</div>
             <div class="summary-box">
+              {% if meta.fx %}
+                <hr class="my-2">
+                <div class="small-muted">
+                  Cotización {{ meta.fx.pair }} @ {{ meta.fx.rate|numfmt(0) }} ({{ meta.fx.date }})
+                </div>
+              {% endif %}
+                <hr class="my-2">
+
               {% if meta.amounts %}
                 <div class="row g-2">
                   <div class="col-md-6">
                     <div class="small-muted mb-1 fw-semibold">En USD</div>
                     <div class="d-flex justify-content-between small-muted">
                       <span>Base:</span>
-                      <span>{{ meta.amounts.base.usd|numfmt(2) }}</span>
+                      <span id="tot-base-usd">{{ meta.amounts.base.usd|numfmt(2) }}</span>
                     </div>
                     <div class="d-flex justify-content-between small-muted">
                       <span>Fee:</span>
-                      <span>{{ meta.amounts.fee.usd|numfmt(2) }}</span>
+                      <span id="tot-fee-usd">{{ meta.amounts.fee.usd|numfmt(2) }}</span>
                     </div>
                     <div class="d-flex justify-content-between small-muted">
                       <span>Total:</span>
-                      <span>{{ meta.amounts.total.usd|numfmt(2) }}</span>
+                      <span id="tot-total-usd">{{ meta.amounts.total.usd|numfmt(2) }}</span>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="small-muted mb-1 fw-semibold">En Gs</div>
                     <div class="d-flex justify-content-between small-muted">
                       <span>Base:</span>
-                      <span>{{ meta.amounts.base.pyg|numfmt(0) }}</span>
+                      <span id="tot-base-pyg">{{ meta.amounts.base.pyg|numfmt(0) }}</span>
                     </div>
                     <div class="d-flex justify-content-between small-muted">
                       <span>Fee:</span>
-                      <span>{{ meta.amounts.fee.pyg|numfmt(0) }}</span>
+                      <span id="tot-fee-pyg">{{ meta.amounts.fee.pyg|numfmt(0) }}</span>
                     </div>
                     <div class="d-flex justify-content-between small-muted">
                       <span>Total:</span>
-                      <span>{{ meta.amounts.total.pyg|numfmt(0) }}</span>
+                      <span id="tot-total-pyg">{{ meta.amounts.total.pyg|numfmt(0) }}</span>
                     </div>
                   </div>
                 </div>
@@ -328,39 +376,93 @@
                 </div>
               {% endif %}
 
-              {% if meta.fx %}
-                <hr class="my-2">
-                <div class="small-muted">
-                  Cotización {{ meta.fx.pair }} @ {{ meta.fx.rate|numfmt(0) }} ({{ meta.fx.date }})
+
+              {# Fee editable #}
+              <hr class="my-2">
+              
+              <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <div class="label-soft mb-1">Fee</div>
+
+            {# Vista solo lectura #}
+            <div class="view-only small-muted" id="fee-view-label">
+              Modo: <strong>{{ meta.fee_mode or 'PCT' }}</strong>
+            </div>
+
+            {# Controles de edición: solo tipo, valor viene de /config/api/pricing #}
+            <div class="edit-only d-none">
+              <div class="row g-2 align-items-center">
+                <div class="col-6">
+                  <select id="sel-fee-mode" class="form-select form-select-sm">
+                    {# Uso FIX para mantener consistencia con create_wizard #}
+                    <option value="NONE" {% if meta.fee_mode == 'NONE' %}selected{% endif %}>Sin fee</option>
+                    <option value="PCT"  {% if meta.fee_mode == 'PCT' or not meta.fee_mode %}selected{% endif %}>Porcentaje (%)</option>
+                    <option value="FIX"  {% if meta.fee_mode == 'FIX' %}selected{% endif %}>Monto fijo USD</option>
+                  </select>
                 </div>
-              {% endif %}
+                <div class="col-6">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="lbl-fee-unit">%</span>
+                    <input type="number"
+                           step="0.01"
+                           class="form-control text-end"
+                           id="inp-fee-value"
+                           value="0.0"
+                           disabled>
+                  </div>
+                  
+                </div>
+              </div>
             </div>
           </div>
 
-          {% if meta.notes %}
-            <hr>
-            <div class="label-soft mb-1">Notas</div>
-            <div>{{ meta.notes }}</div>
-          {% endif %}
+        </div>
 
-        {% else %}
+        <hr>
+        
+            </div>
+          </div>
+
+          {# Notas (editable) #}
+          <hr>
+          
+          <div class="mb-2" style="min-width:260px;">
+            <div class="label-soft mb-1">Notas</div>
+
+            <!-- Modo solo lectura -->
+            <div class="view-only small-muted" id="notes-view">
+              {{ meta.notes or 'Sin notas' }}
+            </div>
+
+            <!-- Modo edición -->
+            <textarea id="txt-notes"
+                      class="form-control form-control-sm edit-only d-none"
+                      rows="2"
+                      placeholder="Notas internas o comentarios...">{{ meta.notes or '' }}</textarea>
+          </div>
+          
+                {% else %}
           {# ================== REMIT ================== #}
 
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="summary-box mb-3">
+          {# 1) Remitente / Destinatario lado a lado #}
+          <div class="row g-3 mb-3 align-items-center">
+            <!-- Remitente -->
+            <div class="col-md-5">
+              <div class="summary-box h-100">
                 <div class="label-soft mb-1">Remitente</div>
+
                 {% if meta.sender %}
                   {% set sender_country = meta.sender.country or 'US' %}
                   {% set sender_flag_file = 'img/flags/us.svg' %}
                   {% if sender_country == 'PY' %}
                     {% set sender_flag_file = 'img/flags/py.svg' %}
                   {% endif %}
+
                   <div class="d-flex justify-content-between align-items-center mb-1">
                     <div class="fw-semibold">{{ meta.sender.name }}</div>
                     <span class="flag-pill">
                       <img src="{{ url_for('static', filename=sender_flag_file) }}"
-                           alt="{{ sender_country }}" class="flag-icon">
+                          alt="{{ sender_country }}" class="flag-icon">
                       {{ sender_country }}
                     </span>
                   </div>
@@ -371,20 +473,32 @@
                   <div class="small-muted">Sin datos de remitente.</div>
                 {% endif %}
               </div>
+            </div>
 
-              <div class="summary-box">
+            <!-- Flecha centro -->
+            <div class="col-md-2 d-flex justify-content-center">
+              <img src="{{ url_for('static', filename='img/right-arrow-full.svg') }}"
+                  alt="→"
+                  style="width:75px; opacity:0.7;">
+            </div>
+
+            <!-- Destinatario -->
+            <div class="col-md-5">
+              <div class="summary-box h-100">
                 <div class="label-soft mb-1">Destinatario</div>
+
                 {% if meta.receiver %}
                   {% set receiver_country = meta.receiver.country or 'PY' %}
                   {% set receiver_flag_file = 'img/flags/py.svg' %}
                   {% if receiver_country == 'US' %}
                     {% set receiver_flag_file = 'img/flags/us.svg' %}
                   {% endif %}
+
                   <div class="d-flex justify-content-between align-items-center mb-1">
                     <div class="fw-semibold">{{ meta.receiver.name }}</div>
                     <span class="flag-pill">
                       <img src="{{ url_for('static', filename=receiver_flag_file) }}"
-                           alt="{{ receiver_country }}" class="flag-icon">
+                          alt="{{ receiver_country }}" class="flag-icon">
                       {{ receiver_country }}
                     </span>
                   </div>
@@ -396,58 +510,151 @@
                 {% endif %}
               </div>
             </div>
+          </div>
 
-            <div class="col-md-6">
-              <div class="summary-box mb-3">
-                <div class="label-soft mb-1">Montos</div>
-                <div class="small-muted">Monto enviado (USD)</div>
-                <div class="fw-semibold fs-5 mb-2">
-                  {{ (meta.amount_usd or (meta.amounts.base.usd if meta.amounts and meta.amounts.base else 0))|numfmt(2) }}
-                </div>
 
-                {% if meta.amounts %}
+          {# 2) Montos (card a lo ancho) #}
+          <div class="summary-box mb-3">
+            <div class="label-soft mb-1">Montos</div>
+
+            <div class="small-muted">Monto enviado (USD)</div>
+            <div class="fw-semibold fs-5 mb-2" id="remit-amount-view">
+              {{ (meta.remit.amount_usd if meta.remit and meta.remit.amount_usd is not none
+                  else (meta.amounts.base.usd if meta.amounts and meta.amounts.base else 0))|numfmt(2) }}
+            </div>
+
+            <div class="edit-only d-none mb-2" style="max-width:240px;">
+              <input id="remit-amount-edit" type="number" step="0.01"
+                     class="form-control form-control-sm"
+                     value="{{ meta.remit.amount_usd if meta.remit and meta.remit.amount_usd is not none
+                               else (meta.amounts.base.usd if meta.amounts and meta.amounts.base else 0) }}">
+            </div>
+
+            {% if meta.amounts %}
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="small-muted mb-1 fw-semibold">En PY</div>
                   <div class="d-flex justify-content-between small-muted">
                     <span>Base PY:</span>
-                    <span>{{ meta.amounts.base.pyg|numfmt(0) }}</span>
+                    <span id="remit-base-pyg">{{ meta.amounts.base.pyg|numfmt(0) }}</span>
                   </div>
                   <div class="d-flex justify-content-between small-muted">
                     <span>Fee PY:</span>
-                    <span>{{ meta.amounts.fee.pyg|numfmt(0) }}</span>
+                    <span id="remit-fee-pyg">{{ meta.amounts.fee.pyg|numfmt(0) }}</span>
                   </div>
                   <div class="d-flex justify-content-between small-muted">
                     <span>Total PY:</span>
-                    <span>{{ meta.amounts.total.pyg|numfmt(0) }}</span>
+                    <span id="remit-total-pyg">{{ meta.amounts.total.pyg|numfmt(0) }}</span>
                   </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="small-muted mb-1 fw-semibold">En USD (calculado)</div>
+                  <div class="d-flex justify-content-between small-muted">
+                    <span>Base USD:</span>
+                    <span>
+                      {{ (meta.amounts.base.usd if meta.amounts and meta.amounts.base and meta.amounts.base.usd is not none
+                          else (meta.remit.amount_usd if meta.remit and meta.remit.amount_usd is not none else 0))|numfmt(2) }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between small-muted">
+                    <span>Fee USD:</span>
+                    <span>
+                      {{ (meta.amounts.fee.usd if meta.amounts and meta.amounts.fee and meta.amounts.fee.usd is not none
+                          else 0)|numfmt(2) }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between small-muted">
+                    <span>Total USD:</span>
+                    <span>
+                      {{ (meta.amounts.total.usd if meta.amounts and meta.amounts.total and meta.amounts.total.usd is not none
+                          else 0)|numfmt(2) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          {# 3) FX (cotización) & Fee (con selector igual a GOODS) #}
+          <div class="summary-box mb-3">
+            <div class="row g-3 align-items-start">
+              <div class="col-md-6">
+                <div class="label-soft mb-1">FX</div>
+                {% if meta.fx %}
+                  <div class="small-muted">
+                    Par: <span id="remit-fx-pair">{{ meta.fx.pair }}</span>
+                    · Fecha: <span id="remit-fx-date">{{ meta.fx.date }}</span>
+                  </div>
+                  <div class="small-muted">
+                    Tasa: <strong id="remit-fx-rate">{{ meta.fx.rate|numfmt(0) }}</strong>
+                  </div>
+                {% else %}
+                  <div class="small-muted">Sin cotización guardada.</div>
                 {% endif %}
               </div>
 
-              <div class="summary-box">
-                <div class="label-soft mb-1">FX & Fee</div>
-                {% if meta.fx %}
-                  <div class="small-muted">
-                    Par: {{ meta.fx.pair }} · Fecha: {{ meta.fx.date }}
+              <div class="col-md-6">
+                <div class="label-soft mb-1">Fee</div>
+
+                {# Vista solo lectura #}
+                <div class="view-only small-muted" id="fee-view-label">
+                  Modo: <strong>{{ meta.fee_mode or 'PCT' }}</strong>
+                </div>
+
+                {# Controles de edición: sólo tipo, valor viene de /config/api/pricing #}
+                <div class="edit-only d-none">
+                  <div class="row g-2 align-items-center">
+                    <div class="col-6">
+                      <select id="sel-fee-mode" class="form-select form-select-sm">
+                        <option value="NONE" {% if meta.fee_mode == 'NONE' %}selected{% endif %}>Sin fee</option>
+                        <option value="PCT"  {% if meta.fee_mode == 'PCT' or not meta.fee_mode %}selected{% endif %}>
+                          Porcentaje (%)
+                        </option>
+                        <option value="FIX"  {% if meta.fee_mode == 'FIX' %}selected{% endif %}>
+                          Monto fijo USD
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="lbl-fee-unit">%</span>
+                        <input type="number"
+                               step="0.01"
+                               class="form-control text-end"
+                               id="inp-fee-value"
+                               value="0.00"
+                               disabled>
+                      </div>
+                    </div>
                   </div>
-                  <div class="small-muted">
-                    Tasa: <strong>{{ meta.fx.rate|numfmt(0) }}</strong>
+                  <div class="form-text small mt-1">
+                    El valor se toma de la configuración global de pricing.
                   </div>
-                {% endif %}
-                {% if meta.fee_mode %}
-                  <div class="small-muted mt-1">
-                    Modo fee: <strong>{{ meta.fee_mode }}</strong>
-                  </div>
-                {% endif %}
+                </div>
               </div>
             </div>
           </div>
 
-          {% if meta.notes %}
-            <hr>
+          {# 4) Notas (misma lógica editable que GOODS) #}
+          <hr>
+          <div class="mb-2" style="min-width:260px;">
             <div class="label-soft mb-1">Notas</div>
-            <div>{{ meta.notes }}</div>
-          {% endif %}
+
+            <div class="view-only small-muted" id="notes-view">
+              {{ meta.notes or 'Sin notas' }}
+            </div>
+
+            <textarea id="txt-notes"
+                      class="form-control form-control-sm edit-only d-none"
+                      rows="2"
+                      placeholder="Notas internas o comentarios...">{{ meta.notes or '' }}</textarea>
+          </div>
         {% endif %}
+
       </div>
     </div>
+
+    
 
     <!-- Historial de estados -->
     <div class="card shadow-sm mb-3">
@@ -535,7 +742,69 @@
 </div>
 
 <script>
-const CASE_ID = {{ c.id }};
+const CASE_ID   = {{ c.id }};
+const META      = {{ (c.meta or {})|tojson }};
+const CASE_TYPE = META.kind || '{{ c.case_type or c.type }}' || 'GOODS';
+
+let editMode     = false;
+let pricingRules = {};  // { GOODS: {fee_pct, fee_flat}, REMIT: {...} }
+
+const state = {
+  case_type: CASE_TYPE,
+  fee_mode: META.fee_mode || 'PCT',
+  notes: META.notes || '',
+  // GOODS
+  items: (META.goods && META.goods.items) ? META.goods.items.map(it => ({
+    description: it.description,
+    qty: Number(it.qty || 0),
+    cost_usd: Number(it.cost_usd || 0),
+    price_usd: Number(it.price_usd || 0)
+  })) : [],
+  shipping: META.goods && META.goods.shipping ? {
+    enabled: !!META.goods.shipping.enabled,
+    amount: Number(META.goods.shipping.amount || 0),
+    currency: META.goods.shipping.currency || 'USD'
+  } : { enabled:false, amount:0, currency:'USD' },
+  fx_rate_goods: META.fx && META.fx.rate != null ? Number(META.fx.rate) : null,
+  fx_goods_date: META.fx && META.fx.date ? META.fx.date : null,
+  fx_goods_pair: META.fx && META.fx.pair ? META.fx.pair : 'USD/PYG',
+
+  // REMIT
+  amount_usd: (META.remit && META.remit.amount_usd != null)
+              ? Number(META.remit.amount_usd)
+              : (META.amounts && META.amounts.base && META.amounts.base.usd != null
+                  ? Number(META.amounts.base.usd)
+                  : null),
+  fx_rate: META.fx && META.fx.rate != null ? Number(META.fx.rate) : null,
+  fx_date: META.fx && META.fx.date ? META.fx.date : null,
+  fx_pair: META.fx && META.fx.pair ? META.fx.pair : null,
+  remit_breakdown_py: META.amounts ? {
+    base_py: META.amounts.base  ? Number(META.amounts.base.pyg  || 0) : 0,
+    fee_py:  META.amounts.fee   ? Number(META.amounts.fee.pyg   || 0) : 0,
+    total_py: META.amounts.total? Number(META.amounts.total.pyg || 0) : 0
+  } : null,
+  remit_fee_amount: META.amounts && META.amounts.fee ? Number(META.amounts.fee.usd || 0) : 0,
+  remit_total_charge: META.amounts && META.amounts.total ? Number(META.amounts.total.usd || 0) : null
+};
+
+/* ===== Util ===== */
+function toast(msg){
+  if(window.showToast){ return window.showToast(msg); }
+  alert(msg);
+}
+function formatGs(amount){
+  const v = Math.round(Number(amount || 0));
+  return 'Gs. ' + v.toLocaleString('es-PY');
+}
+function inferPairFromCountries(senderCountry, receiverCountry){
+  if (senderCountry === 'US' && receiverCountry === 'PY') return 'USD/PYG';
+  if (senderCountry === 'PY' && receiverCountry === 'US') return 'PYG/USD';
+  return 'USD/PYG';
+}
+
+/* ========================================================= */
+/* ======  PARTE 1: Cambiar estado + Adjuntos (igual)  ===== */
+/* ========================================================= */
 
 document.getElementById('btn-advance').onclick = async () => {
   const next = prompt('Estado/evento a aplicar (ej: ENVIADO_A_PY, LISTO_PARA_RETIRO, etc.)');
@@ -577,5 +846,551 @@ document.getElementById('btn-upload').onclick = async () => {
     toast('Error subiendo adjunto');
   }
 };
+
+/* ========================================================= */
+/* ==========  PARTE 2: Pricing + Edición de meta  ========= */
+/* ========================================================= */
+
+/* ---- Cargar pricing desde /config/api/pricing ---- */
+async function loadPricing(){
+  try{
+    const res = await fetch('/config/api/pricing');
+    const txt = await res.text();
+    let json; try{ json = JSON.parse(txt); } catch{ json = null; }
+
+    if(!res.ok || !json || json.ok !== true){
+      console.warn('pricing_get error', res.status, txt);
+      return;
+    }
+
+    // Esperamos { ok: true, items: [ {case_type, fee_pct, fee_flat, ...}, ... ] }
+    pricingRules = {};
+    (json.items || []).forEach(r=>{
+      pricingRules[r.case_type] = {
+        fee_pct: Number(r.fee_pct || 0),
+        fee_flat: Number(r.fee_flat || 0)
+      };
+    });
+
+    updateFeeValueUI();
+  }catch(e){
+    console.warn('No se pudo cargar pricing:', e);
+  }
+}
+
+/* ---- Actualizar UI de fee según modo + pricing ---- */
+function updateFeeValueUI(){
+  const sel     = document.getElementById('sel-fee-mode');
+  const inp     = document.getElementById('inp-fee-value');
+  const lblUnit = document.getElementById('lbl-fee-unit');
+  const feeView = document.getElementById('fee-view-label');
+
+  const meta = META || {};
+  const amts = meta.amounts || {};
+
+  // Valores que vienen del pricing global (si ya se cargaron)
+  const rulesRaw = pricingRules[CASE_TYPE] || {};
+  let feePct  = (rulesRaw.fee_pct  != null) ? Number(rulesRaw.fee_pct)  : null;
+  let feeFlat = (rulesRaw.fee_flat != null) ? Number(rulesRaw.fee_flat) : null;
+
+  // Fallback: si no hay pricing cargado, tratamos de inferirlo del caso
+  const baseUsdMeta = amts.base && amts.base.usd != null ? Number(amts.base.usd) : null;
+  const feeUsdMeta  = amts.fee  && amts.fee.usd  != null ? Number(amts.fee.usd)  : null;
+
+  if ((feePct == null || isNaN(feePct)) && baseUsdMeta && feeUsdMeta != null) {
+    feePct = (feeUsdMeta * 100) / baseUsdMeta;
+  }
+  if ((feeFlat == null || isNaN(feeFlat)) && feeUsdMeta != null) {
+    // Para "monto fijo", tomamos el fee en USD del caso
+    feeFlat = feeUsdMeta;
+  }
+
+  const mode = state.fee_mode || 'PCT';
+
+  if(sel){
+    sel.value = mode;
+  }
+
+  if(inp && lblUnit){
+    let showVal = 0;
+
+    if(mode === 'PCT'){
+      lblUnit.innerText = '%';
+      showVal = feePct != null ? feePct : 0;
+    } else if(mode === 'FIX'){
+      lblUnit.innerText = 'USD';
+      showVal = feeFlat != null ? feeFlat : 0;
+    } else {
+      // NONE
+      lblUnit.innerText = '%';
+      showVal = 0;
+    }
+
+    inp.value = Number(showVal).toFixed(2);
+  }
+
+  if(feeView){
+    let text = 'Sin fee';
+
+    if(mode === 'PCT'){
+      const v = feePct != null ? feePct.toFixed(2) : '0.00';
+      text = `Porcentaje (${v}%)`;
+    } else if(mode === 'FIX'){
+      const v = feeFlat != null ? feeFlat.toFixed(2) : '0.00';
+      text = `Monto fijo (USD ${v})`;
+    }
+
+    feeView.innerHTML = 'Modo: <strong>' + mode + '</strong> · ' + text;
+  }
+}
+
+
+/* ---- Toggle edición ---- */
+function setEditMode(on){
+  editMode = on;
+  document.querySelectorAll('.view-only').forEach(el=>{
+    el.classList.toggle('d-none', on);
+  });
+  document.querySelectorAll('.edit-only').forEach(el=>{
+    el.classList.toggle('d-none', !on);
+  });
+
+  const btn = document.getElementById('btn-save-meta');
+  if(btn){
+    btn.textContent = on ? '💾 Guardar cambios' : '✏️ Editar';
+  }
+
+  // Inicializar controles
+  if(on){
+    const notesInput = document.getElementById('txt-notes');
+    if (notesInput) {
+      // Cargar lo que tengamos en state
+      notesInput.value = state.notes || '';
+      // Mantener sincronizado mientras escribe
+      notesInput.oninput = () => {
+        state.notes = notesInput.value;
+      };
+    }
+
+    const selFee = document.getElementById('sel-fee-mode');
+    if(selFee){
+      selFee.value = state.fee_mode;
+      selFee.onchange = async ()=>{
+        state.fee_mode = selFee.value;
+        updateFeeValueUI();
+        if(CASE_TYPE === 'GOODS'){
+          syncGoodsItemsFromUI();
+          await recalcPricesDetail();
+        }else{
+          await recalcRemitDetail();
+        }
+      };
+    }
+
+    if(CASE_TYPE === 'GOODS'){
+      attachGoodsEditListeners();
+    } else {
+      attachRemitEditListeners();
+    }
+  }
+}
+
+/* ---- GOODS: leer inputs de la tabla ---- */
+function syncGoodsItemsFromUI(){
+  const tbody = document.getElementById('goods-items-body');
+  if(!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  state.items = rows.map(row=>{
+    const descEl = row.querySelector('.in-desc') || row.querySelector('.view-only');
+    return {
+      description: descEl ? descEl.value?.trim?.() || descEl.textContent.trim() : '',
+      qty: Number((row.querySelector('.in-qty')  || {}).value || 0),
+      cost_usd: Number((row.querySelector('.in-cost') || {}).value || 0),
+      price_usd: Number((row.querySelector('.in-price')|| {}).value || 0)
+    };
+  }).filter(it => it.description);
+}
+
+/* ---- GOODS: recalcular vía /cases/quote ---- */
+async function recalcPricesDetail(){
+  if(CASE_TYPE !== 'GOODS') return;
+  if(!state.items.length) return;
+
+  const itemsTotal = state.items.reduce(
+    (acc, it)=> acc + (Number(it.cost_usd||0) * Number(it.qty||0)), 0
+  );
+  const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
+
+  // Sin fee -> costo + shipping
+  if(state.fee_mode === 'NONE'){
+    const totalCosto  = itemsTotal;
+    const totalPrecio = totalCosto + shippingCost;
+    const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
+
+    const tbody = document.getElementById('goods-items-body');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach((row, i)=>{
+      const costUnit = Number(row.querySelector('.in-cost').value || 0);
+      const priceUnit = costUnit * factor;
+      const inPrice = row.querySelector('.in-price');
+      if(inPrice) inPrice.value = priceUnit.toFixed(2);
+      state.items[i].price_usd = priceUnit;
+    });
+
+    updateGoodsTotals(totalCosto, totalPrecio, state.fx_rate_goods);
+    return;
+  }
+
+  // Con fee -> proxy
+  let feeType;
+  if(state.fee_mode === 'PCT') feeType = 1;
+  else if(state.fee_mode === 'FIX') feeType = 2;
+  else feeType = 0;
+
+  try{
+    const res = await fetch('/cases/quote', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        kind: 'GOODS',
+        customer_id: 1,
+        items_total: itemsTotal,
+        shipping_cost: shippingCost,
+        fee_type: feeType
+      })
+    });
+
+    const txt = await res.text();
+    let json; try{ json = JSON.parse(txt); } catch{ json = null; }
+
+    if(!res.ok){
+      console.error('HTTP', res.status, txt);
+      throw new Error('HTTP '+res.status);
+    }
+
+    const node = Array.isArray(json) ? json[0] : json;
+    if(!node || node.ok !== true || !node.quote){
+      console.error('Respuesta inesperada:', json);
+      throw new Error('Formato de respuesta inválido');
+    }
+
+    const quote = node.quote;
+    const totalPrecio = Number(quote.total || 0);
+    const totalCosto  = itemsTotal;
+    const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
+
+    const tbody = document.getElementById('goods-items-body');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach((row, i)=>{
+      const costUnit  = Number(row.querySelector('.in-cost').value || 0);
+      const priceUnit = costUnit * factor;
+      const inPrice = row.querySelector('.in-price');
+      if(inPrice) inPrice.value = priceUnit.toFixed(2);
+      state.items[i].price_usd = priceUnit;
+    });
+
+    const fxObj = node.fx || quote.fx || META.fx || {};
+    if(fxObj && fxObj.rate != null){
+      state.fx_rate_goods = Number(fxObj.rate);
+      state.fx_goods_date = fxObj.date || new Date().toISOString().slice(0,10);
+      state.fx_goods_pair = fxObj.pair || 'USD/PYG';
+    }
+
+    updateGoodsTotals(totalCosto, totalPrecio, state.fx_rate_goods);
+  }catch(e){
+    console.error('recalcPricesDetail error:', e);
+    toast('No se pudieron recalcular los precios');
+  }
+}
+
+function updateGoodsTotals(totalCosto, totalPrecio, fxRate){
+  fxRate = fxRate || 0;
+  const diffUsd = totalPrecio - totalCosto;
+
+  const baseUsdEl  = document.getElementById('tot-base-usd');
+  const feeUsdEl   = document.getElementById('tot-fee-usd');
+  const totalUsdEl = document.getElementById('tot-total-usd');
+  const basePygEl  = document.getElementById('tot-base-pyg');
+  const feePygEl   = document.getElementById('tot-fee-pyg');
+  const totalPygEl = document.getElementById('tot-total-pyg');
+
+  if(baseUsdEl)  baseUsdEl.innerText  = totalCosto.toFixed(2);
+  if(feeUsdEl)   feeUsdEl.innerText   = diffUsd.toFixed(2);
+  if(totalUsdEl) totalUsdEl.innerText = totalPrecio.toFixed(2);
+
+  if(basePygEl)  basePygEl.innerText  = fxRate ? Math.round(totalCosto * fxRate).toLocaleString('es-PY') : '0';
+  if(feePygEl)   feePygEl.innerText   = fxRate ? Math.round(diffUsd  * fxRate).toLocaleString('es-PY') : '0';
+  if(totalPygEl) totalPygEl.innerText = fxRate ? Math.round(totalPrecio * fxRate).toLocaleString('es-PY') : '0';
+}
+
+/* ---- REMIT: recalcular vía /cases/quote ---- */
+async function recalcRemitDetail(){
+  if(CASE_TYPE !== 'REMIT') return;
+  if(!state.amount_usd || state.amount_usd <= 0) return;
+
+  const senderCountry = (META.sender && META.sender.country) || 'US';
+  const receiverCountry = (META.receiver && META.receiver.country) || 'PY';
+  const pair = inferPairFromCountries(senderCountry, receiverCountry);
+
+  let feeType, feeOverride = null;
+  if (state.fee_mode === 'PCT') {
+    feeType = 1;
+  } else if (state.fee_mode === 'FIX') {
+    feeType = 2;
+  } else {
+    feeType = 0;
+    feeOverride = { fee_pct: 0, fee_flat: 0 };
+  }
+
+  try{
+    const res = await fetch('/cases/quote', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        kind: 'REMIT',
+        customer_id: 1,
+        amount_usd: state.amount_usd,
+        pair: pair,
+        fee_type: feeType,
+        fee_override: feeOverride
+      })
+    });
+
+    const txt = await res.text();
+    let json; try{ json = JSON.parse(txt); } catch{ json = null; }
+
+    if(!res.ok){
+      console.error('HTTP', res.status, txt);
+      throw new Error('HTTP '+res.status);
+    }
+
+    const node = json;
+    if(!node || node.ok !== true || !node.quote){
+      console.error('Respuesta inesperada (REMIT):', json);
+      throw new Error('Formato de respuesta inválido');
+    }
+
+    const quote = node.quote;
+    const fxObj   = quote.fx || node.fx || META.fx || {};
+    const fxRate  = Number(fxObj.rate || quote.fx_rate || 0);
+    const basePy  = Number(quote.base_py || 0);
+    const feePy   = Number(quote.fee_amount || 0);
+    const totalPy = Number(quote.total_py || 0);
+
+    const baseUsd  = Number(state.amount_usd || 0);
+    const feeUsd   = fxRate ? (feePy / fxRate) : 0;
+    const totalUsd = baseUsd + feeUsd;
+
+    state.fx_rate = fxRate || null;
+    state.fx_date = fxObj.date || META.fx?.date || new Date().toISOString().slice(0,10);
+    state.fx_pair = fxObj.pair || META.fx?.pair || pair;
+
+    state.remit_fee_amount   = feeUsd;
+    state.remit_total_charge = totalUsd;
+    state.remit_breakdown_py = { base_py: basePy, fee_py: feePy, total_py: totalPy };
+
+    updateRemitUIFromState();
+  }catch(e){
+    console.error('recalcRemitDetail error:', e);
+    toast('No se pudo recalcular la remesa');
+  }
+}
+
+function updateRemitUIFromState(){
+  const viewAmt = document.getElementById('remit-amount-view');
+  const basePyg = document.getElementById('remit-base-pyg');
+  const feePyg  = document.getElementById('remit-fee-pyg');
+  const totPyg  = document.getElementById('remit-total-pyg');
+  const fxPair  = document.getElementById('remit-fx-pair');
+  const fxDate  = document.getElementById('remit-fx-date');
+  const fxRateEl= document.getElementById('remit-fx-rate');
+
+  if(viewAmt) viewAmt.innerText = (state.amount_usd || 0).toFixed(2);
+  if(basePyg) basePyg.innerText = state.remit_breakdown_py ? state.remit_breakdown_py.base_py.toLocaleString('es-PY') : '0';
+  if(feePyg)  feePyg.innerText  = state.remit_breakdown_py ? state.remit_breakdown_py.fee_py.toLocaleString('es-PY') : '0';
+  if(totPyg)  totPyg.innerText  = state.remit_breakdown_py ? state.remit_breakdown_py.total_py.toLocaleString('es-PY'): '0';
+  if(fxPair && state.fx_pair) fxPair.innerText = state.fx_pair;
+  if(fxDate && state.fx_date) fxDate.innerText = state.fx_date;
+  if(fxRateEl && state.fx_rate!=null) fxRateEl.innerText = state.fx_rate.toFixed(0);
+}
+
+/* ---- Listeners específicos de edición ---- */
+function attachGoodsEditListeners(){
+  const tbody = document.getElementById('goods-items-body');
+  if(!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  rows.forEach(row=>{
+    const inQty  = row.querySelector('.in-qty');
+    const inCost = row.querySelector('.in-cost');
+    if(inQty){
+      inQty.oninput = async ()=>{
+        syncGoodsItemsFromUI();
+        await recalcPricesDetail();
+      };
+    }
+    if(inCost){
+      inCost.oninput = async ()=>{
+        syncGoodsItemsFromUI();
+        await recalcPricesDetail();
+      };
+    }
+  });
+}
+
+function attachRemitEditListeners(){
+  const inAmt = document.getElementById('remit-amount-edit');
+  if(inAmt){
+    inAmt.oninput = async ()=>{
+      const v = parseFloat(inAmt.value);
+      state.amount_usd = isNaN(v) ? null : v;
+      await recalcRemitDetail();
+    };
+  }
+}
+
+/* ---- Construir meta actualizado para PATCH ---- */
+function buildUpdatedMeta(){
+  const meta = JSON.parse(JSON.stringify(META || {}));
+  meta.notes    = state.notes || null;
+  meta.fee_mode = state.fee_mode;
+  meta.kind     = state.case_type || meta.kind || CASE_TYPE;
+
+  if(CASE_TYPE === 'GOODS'){
+    let totalCostUsd = 0;
+    let totalPriceUsd = 0;
+    const items = (state.items || []).map(x=>{
+      const qty   = Number(x.qty || 0);
+      const cost  = Number(x.cost_usd || 0);
+      const price = Number(x.price_usd || 0);
+      totalCostUsd  += qty * cost;
+      totalPriceUsd += qty * price;
+      return { description:x.description, qty, cost_usd:cost, price_usd:price };
+    });
+
+    const diffUsd = totalPriceUsd - totalCostUsd;
+    const fxRate  = state.fx_rate_goods || (meta.fx && meta.fx.rate) || null;
+    const fxDate  = state.fx_goods_date || (meta.fx && meta.fx.date) || new Date().toISOString().slice(0,10);
+    const fxPair  = state.fx_goods_pair || (meta.fx && meta.fx.pair) || 'USD/PYG';
+
+    meta.fx = {date:fxDate, pair:fxPair, rate:fxRate};
+
+    if(fxRate){
+      meta.amounts = {
+        base:  { usd: totalCostUsd,  pyg: totalCostUsd * fxRate },
+        fee:   { usd: diffUsd,       pyg: diffUsd * fxRate },
+        total: { usd: totalPriceUsd, pyg: totalPriceUsd * fxRate }
+      };
+    } else {
+      meta.amounts = {
+        base:  { usd: totalCostUsd,  pyg: 0 },
+        fee:   { usd: diffUsd,       pyg: 0 },
+        total: { usd: totalPriceUsd, pyg: 0 }
+      };
+    }
+
+    meta.goods = meta.goods || {};
+    meta.goods.items    = items;
+    meta.remit          = null;
+
+  } else {
+    const baseUsd  = Number(state.amount_usd || 0);
+    const feeUsd   = Number(state.remit_fee_amount || 0);
+    const totalUsd = Number(state.remit_total_charge || (baseUsd + feeUsd));
+
+    const fxRate  = state.fx_rate || (meta.fx && meta.fx.rate) || null;
+    const fxDate  = state.fx_date || (meta.fx && meta.fx.date) || new Date().toISOString().slice(0,10);
+    const fxPair  = state.fx_pair || (meta.fx && meta.fx.pair)
+                     || inferPairFromCountries(
+                          (META.sender && META.sender.country) || 'US',
+                          (META.receiver && META.receiver.country) || 'PY'
+                        );
+
+    meta.fx = {date:fxDate, pair:fxPair, rate:fxRate};
+
+    const bp = state.remit_breakdown_py || {};
+    const basePy = bp.base_py || (fxRate ? baseUsd * fxRate : 0);
+    const feePy  = bp.fee_py  || (fxRate ? feeUsd * fxRate  : 0);
+    const totPy  = bp.total_py|| (fxRate ? totalUsd * fxRate: 0);
+
+    meta.amounts = {
+      base:  { usd: baseUsd,  pyg: basePy },
+      fee:   { usd: feeUsd,   pyg: feePy  },
+      total: { usd: totalUsd, pyg: totPy  }
+    };
+
+    meta.remit = meta.remit || {};
+    meta.remit.amount_usd = baseUsd;
+    if(!meta.remit.direction){
+      const sc = (META.sender && META.sender.country) || 'US';
+      const rc = (META.receiver && META.receiver.country) || 'PY';
+      meta.remit.direction = `${sc}→${rc}`;
+    }
+    meta.goods = null;
+  }
+
+  return meta;
+}
+
+/* ---- Botón Editar / Guardar ---- */
+const btnMeta = document.getElementById('btn-save-meta');
+if(btnMeta){
+  btnMeta.addEventListener('click', async ()=>{
+    if(!editMode){
+      setEditMode(true);
+      return;
+    }
+
+    try{
+      // 1) Sincronizar NOTAS desde el textarea
+      const notesEl = document.getElementById('txt-notes');
+      if (notesEl) {
+        state.notes = notesEl.value.trim();
+      }
+
+      // 2) Recalcular según el tipo de caso
+      if(CASE_TYPE === 'GOODS'){
+        syncGoodsItemsFromUI();
+        await recalcPricesDetail();
+      } else {
+        const inAmt = document.getElementById('remit-amount-edit');
+        if(inAmt){
+          const v = parseFloat(inAmt.value);
+          state.amount_usd = isNaN(v) ? null : v;
+        }
+        await recalcRemitDetail();
+      }
+
+      // 3) Construir meta con notes ya actualizadas
+      const updatedMeta = buildUpdatedMeta();
+
+      const res = await fetch(`/cases/${CASE_ID}`, {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ meta: updatedMeta })
+      });
+
+      const txt = await res.text();
+      let json; try{ json = JSON.parse(txt); } catch{ json=null; }
+
+      if(!res.ok || !json || json.ok !== true){
+        console.error('PATCH error', res.status, txt);
+        toast('No se pudo guardar el caso');
+        return;
+      }
+
+      toast('Cambios guardados ✔');
+      setTimeout(()=> location.reload(), 600);
+    }catch(e){
+      console.error('save meta error', e);
+      toast('Error guardando cambios');
+    }
+  });
+}
+
+
+/* ---- Init ---- */
+loadPricing();
+updateFeeValueUI();
 </script>
+
 {% endblock %}

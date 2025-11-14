@@ -37,3 +37,6 @@ def put(path: str, json=None, headers=None):
 
 def delete(path: str, headers=None):
     return _request("DELETE", path, headers=headers)
+
+def patch(path: str, json=None, headers=None):
+    return _request("PATCH", path, json=json, headers=headers)
