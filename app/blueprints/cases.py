@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, abort
 from ..utils.api import get, post, patch
 from ..utils.auth import auth_header
+from urllib.parse import quote_plus
+from urllib.parse import urlencode
 
 bp = Blueprint("cases", __name__, template_folder="../templates")
 
@@ -171,3 +173,63 @@ def update_case(case_id):
             r.status_code,
             {"Content-Type": r.headers.get("Content-Type", "text/plain")}
         )
+
+@bp.get("/customer-lookup")
+def customer_lookup_proxy():
+    """
+    Proxy web -> backend API para autocompletar cliente por teléfono.
+    Front llama a:  /cases/customer-lookup?phone=+595981514767
+    Esto redirige a: /api/customers/lookup?phone=+595981514767
+    usando el mismo JWT.
+    """
+    token = request.cookies.get("jwt")
+    raw_phone = (request.args.get("phone") or "").strip()
+
+    if not raw_phone:
+        return jsonify({"ok": False, "error": "phone requerido"}), 400
+
+    # Construimos la querystring para el backend real
+    qs = urlencode({"phone": raw_phone})
+    path = f"/api/customers/lookup?{qs}"
+
+    headers = auth_header(token) if token else {}
+    try:
+        r = get(path, headers=headers)
+    except Exception as e:
+        print("[customer_lookup_proxy] Error llamando backend:", e)
+        return jsonify({"ok": False, "error": "error backend proxy"}), 500
+
+    try:
+        data = r.json()
+    except Exception:
+        # Backend no devolvió JSON
+        print("[customer_lookup_proxy] Respuesta no JSON:", r.status_code, r.text[:500])
+        return jsonify({
+            "ok": False,
+            "error": "backend no devolvió JSON",
+            "status_code": r.status_code,
+        }), r.status_code
+
+    return jsonify(data), r.status_code
+
+@bp.post("/customer-create")
+def customer_create_proxy():
+    """
+    Crea un customer en el backend real.
+    Body esperado: { "name": "...", "phone": "+595981..." , "email"?: "..." }
+    """
+    token = request.cookies.get("jwt")
+    payload = request.get_json(force=True) or {}
+
+    headers = auth_header(token) if token else {}
+    r = post("/api/customers", json=payload, headers=headers)
+
+    try:
+        data = r.json()
+        return jsonify(data), r.status_code
+    except Exception:
+        return jsonify({
+            "ok": False,
+            "error": "backend no devolvió JSON",
+            "status_code": r.status_code,
+        }), r.status_code

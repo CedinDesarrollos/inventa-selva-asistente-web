@@ -197,63 +197,93 @@
     <!-- PASO 2: Contacto -->
     <div class="step-pane d-none" id="step-2">
       <!-- GOODS -->
-      <div id="panel-goods-contact" class="mb-3">
-        <div class="section-title"><span class="bar"></span><span>🙋 Cliente & Destino (GOODS)</span></div>
+      <div id="panel-goods-contact" class="mb-3 d-none">
+        <div class="section-title">
+          <span class="bar"></span><span>🙋 Cliente &amp; Destino (GOODS)</span>
+        </div>
         <div class="row g-3 mt-1">
-          <div class="col-md-6">
-            <label class="form-label">Nombre del cliente</label>
-            <input id="goods-customer-name" class="form-control" placeholder="Nombre y apellido">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Teléfono (notificaciones)</label>
-            <input id="goods-customer-phone" class="form-control" placeholder="+595 9xx xxx xxx">
-          </div>
-          <div class="col-md-6">
+          <!-- País primero -->
+          <div class="col-md-4">
             <label class="form-label">País destino</label>
             <select id="goods-dst-country" class="form-select">
               <option value="PY" selected>🇵🇾 Paraguay</option>
               <option value="US">🇺🇸 USA</option>
             </select>
+            <div class="form-text">Define el código del teléfono y el destino del envío.</div>
+          </div>
+
+          <!-- Teléfono a la izquierda -->
+          <div class="col-md-4">
+            <label class="form-label">Teléfono (notificaciones)</label>
+            <input id="goods-customer-phone"
+                   class="form-control"
+                   placeholder="+595 9xx xxx xxx">
+            <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
+          </div>
+
+          <!-- Nombre a la derecha (se autocompleta si el teléfono existe) -->
+          <div class="col-md-4">
+            <label class="form-label">Nombre del cliente</label>
+            <input id="goods-customer-name"
+                   class="form-control"
+                   placeholder="Nombre y apellido">
+            <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
           </div>
         </div>
       </div>
 
       <!-- REMIT -->
-      <div id="panel-remit-contact" class="d-none">
-        <div class="section-title"><span class="bar"></span><span>🔁 Remitente & Receptor (REMIT)</span></div>
+      <div id="panel-remit-contact" class="">
+        <div class="section-title">
+          <span class="bar"></span><span>🔁 Remitente &amp; Receptor (REMIT)</span>
+        </div>
         <div class="row g-3 mt-1">
-          <div class="col-md-6">
-            <label class="form-label">Remitente - Nombre</label>
-            <input id="remit-sender-name" class="form-control" placeholder="Nombre y apellido">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Remitente - Teléfono</label>
-            <input id="remit-sender-phone" class="form-control" placeholder="+1 305 ...">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Receptor - Nombre</label>
-            <input id="remit-receiver-name" class="form-control" placeholder="Nombre y apellido">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Receptor - Teléfono</label>
-            <input id="remit-receiver-phone" class="form-control" placeholder="+595 9..">
-          </div>
 
-          <!-- Países remitente / receptor -->
-          <div class="col-md-6">
+          <!-- Remitente -->
+          <div class="col-md-3">
             <label class="form-label">Remitente - País</label>
             <select id="remit-sender-country" class="form-select">
               <option value="US" selected>🇺🇸 USA</option>
               <option value="PY">🇵🇾 Paraguay</option>
             </select>
-            <div class="form-text">Al elegir, el otro se completa con el país opuesto (podés cambiar luego).</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Remitente - Teléfono</label>
+            <input id="remit-sender-phone"
+                   class="form-control"
+                   placeholder="+1 305 ...">
+            <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
           </div>
           <div class="col-md-6">
+            <label class="form-label">Remitente - Nombre</label>
+            <input id="remit-sender-name"
+                   class="form-control"
+                   placeholder="Nombre y apellido">
+            <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
+          </div>
+
+          <!-- Receptor -->
+          <div class="col-md-3">
             <label class="form-label">Receptor - País</label>
             <select id="remit-receiver-country" class="form-select">
               <option value="PY" selected>🇵🇾 Paraguay</option>
               <option value="US">🇺🇸 USA</option>
             </select>
+            <div class="form-text">Por defecto, el opuesto al remitente.</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Receptor - Teléfono</label>
+            <input id="remit-receiver-phone"
+                   class="form-control"
+                   placeholder="+595 9..">
+            <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Receptor - Nombre</label>
+            <input id="remit-receiver-name"
+                   class="form-control"
+                   placeholder="Nombre y apellido">
+            <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
           </div>
         </div>
       </div>
@@ -306,69 +336,68 @@
 
         <div id="quote-hint" class="form-text">El “Precio USD” se calcula automáticamente según el modo de fee.</div>
       </div>
-<!-- REMIT -->
-<div id="panel-remit-details" class="d-none">
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <div class="section-title mb-0"><span class="bar"></span><span>💵 Remesa (REMIT)</span></div>
-    <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-recalc-remit">🧮 Calcular</button>
-  </div>
 
-  <div class="table-responsive mt-1" id="remit-quote-box">
-    <table class="table-modern table table-sm align-middle" id="tbl-remit">
-      <thead>
-        <tr>
-          <th>Descripción</th>
-          <th style="width:160px;">Monto a Enviar (USD)</th>
-          <th style="width:140px;">Cotización</th>
-          <th style="width:170px;">Monto a Cobrar (USD)</th>
-          <th style="width:170px;">Monto a Cobrar (Gs)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td id="remit-desc">
-            Envío de divisa:
-            <span id="remit-desc-names">Remitente → Receptor</span>
-          </td>
-          <td>
-            <input id="remit-amount"
-                   type="number"
-                   min="1"
-                   step="0.01"
-                   class="form-control form-control-sm"
-                   placeholder="100">
-          </td>
-          <td id="remit-col-fx">-</td>
-          <td id="remit-col-charge-usd">USD 0.00</td>
-          <td id="remit-col-charge-py">Gs. 0</td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr>
-          <th class="text-end">Totales:</th>
-          <th id="remit-sum-amt">USD 0.00</th>
-          <th></th>
-          <th id="remit-sum-charge-usd">USD 0.00</th>
-          <th id="remit-sum-charge-py">Gs. 0</th>
-        </tr>
-        <tr>
-          <td colspan="5" class="text-end">
-            <div class="d-inline-block text-start">
-              <div><span class="chip">🧾 Total Costo: <b id="remit-total-cost">USD 0.00</b></span></div>
-              <div><span class="chip teal">💰 Total Precio: <b id="remit-total-price">USD 0.00</b></span></div>
-              <div><span class="chip success">📈 Dif: <b id="remit-total-diff">USD 0.00</b></span></div>
-            </div>
-          </td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-  <div id="remit-quote-hint" class="form-text mt-2">
-    Ingresá el monto en USD en la tabla. Los montos son estimados según el fee del paso 1 y la tasa del día.
-  </div>
-</div>
+      <!-- REMIT -->
+      <div id="panel-remit-details" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0"><span class="bar"></span><span>💵 Remesa (REMIT)</span></div>
+          <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-recalc-remit">🧮 Calcular</button>
+        </div>
 
-      
+        <div class="table-responsive mt-1" id="remit-quote-box">
+          <table class="table-modern table table-sm align-middle" id="tbl-remit">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th style="width:160px;">Monto a Enviar (USD)</th>
+                <th style="width:140px;">Cotización</th>
+                <th style="width:170px;">Monto a Cobrar (USD)</th>
+                <th style="width:170px;">Monto a Cobrar (Gs)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td id="remit-desc">
+                  Envío de divisa:
+                  <span id="remit-desc-names">Remitente → Receptor</span>
+                </td>
+                <td>
+                  <input id="remit-amount"
+                         type="number"
+                         min="1"
+                         step="0.01"
+                         class="form-control form-control-sm"
+                         placeholder="100">
+                </td>
+                <td id="remit-col-fx">-</td>
+                <td id="remit-col-charge-usd">USD 0.00</td>
+                <td id="remit-col-charge-py">Gs. 0</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th class="text-end">Totales:</th>
+                <th id="remit-sum-amt">USD 0.00</th>
+                <th></th>
+                <th id="remit-sum-charge-usd">USD 0.00</th>
+                <th id="remit-sum-charge-py">Gs. 0</th>
+              </tr>
+              <tr>
+                <td colspan="5" class="text-end">
+                  <div class="d-inline-block text-start">
+                    <div><span class="chip">🧾 Total Costo: <b id="remit-total-cost">USD 0.00</b></span></div>
+                    <div><span class="chip teal">💰 Total Precio: <b id="remit-total-price">USD 0.00</b></span></div>
+                    <div><span class="chip success">📈 Dif: <b id="remit-total-diff">USD 0.00</b></span></div>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div id="remit-quote-hint" class="form-text mt-2">
+          Ingresá el monto en USD en la tabla. Los montos son estimados según el fee del paso 1 y la tasa del día.
+        </div>
+      </div>
     </div>
 
     <!-- PASO 4: Resumen -->
@@ -399,19 +428,18 @@ const MAX = 4;
 const state = {
   case_type: 'GOODS',
   notify: 'BOTH',
-  fee_mode: 'PCT',   // PCT | FIX | NONE
+  fee_mode: 'PCT',
   notes: '',
   customer: { name:'', phone:'' },
   destination: { country:'PY' },
-  items: [], // {description, qty, cost_usd, price_usd}
-
-  // Para REMIT
+  items: [],
+  
+  customer_id: null,
   sender:  { name:'', phone:'', country:'US' },
   receiver:{ name:'', phone:'', country:'PY' },
   amount_usd: null,
   purpose: '',
 
-  // FX REMIT
   fx_rate: null,
   fx_date: null,
   fx_pair: null,
@@ -419,14 +447,12 @@ const state = {
   remit_fee_amount: null,
   remit_currency_charge: 'USD',
   remit_fee_currency: 'USD',
-  remit_breakdown_py: null, // { base_py, fee_py, total_py }
+  remit_breakdown_py: null,
 
-  // FX GOODS
   fx_rate_goods: null,
   fx_goods_date: null,
   fx_goods_pair: 'USD/PYG',
 
-  // Shipping GOODS
   shipping: { enabled: false, amount: 0, currency: 'USD' }
 };
 
@@ -457,7 +483,6 @@ async function loadShipping(){
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
 
-    // Esperamos { key: 'shipping_usd', value: { amount, currency } }
     const val = (json && (json.value || json?.item?.value)) || {};
     const amount = Number(val.amount || 0);
     const currency = String(val.currency || 'USD');
@@ -481,15 +506,215 @@ async function loadShipping(){
   }
 }
 
+// ===== Helpers para teléfonos =====
+const CUSTOMERS_LOOKUP_URL = "/cases/customer-lookup";
+
+function onlyDigits(str) {
+  return (str || "").replace(/\D/g, "");
+}
+
+// Devuelve el teléfono canónico para lookup: +595981514767 / +13055551234
+function buildCanonicalPhone(country, rawValue) {
+  let digits = onlyDigits(rawValue || "");
+
+  if (country === "PY") {
+    // Nos quedamos con la parte local (sin 595)
+    if (digits.startsWith("595")) {
+      digits = digits.slice(3);
+    }
+    // Máximo 9 dígitos locales (9xx xxx xxx)
+    digits = digits.slice(0, 9);
+    if (!digits) return null;
+    digits = "595" + digits; // 595 + local
+  } else if (country === "US") {
+    // Quitamos 1 si viene
+    if (digits.startsWith("1")) {
+      digits = digits.slice(1);
+    }
+    // Máximo 10 dígitos locales (XXX XXX XXXX)
+    digits = digits.slice(0, 10);
+    if (!digits) return null;
+    digits = "1" + digits; // 1 + local
+  } else {
+    // Por ahora solo soportamos PY / US
+    return null;
+  }
+
+  return "+" + digits;
+}
+
+// Formatea SOLO la parte local, sin el código de país
+function formatLocalPY(localDigits) {
+  let d = (localDigits || "").slice(0, 9); // 9xx xxx xxx
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return d.slice(0, 3) + " " + d.slice(3);
+  return d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
+}
+
+function formatLocalUS(localDigits) {
+  let d = (localDigits || "").slice(0, 10); // XXX XXX XXXX
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return d.slice(0, 3) + " " + d.slice(3);
+  return d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
+}
+
+// Valida usando el formato canónico
+function isValidPhone(value) {
+  const digits = onlyDigits(value || "");
+  if (digits.startsWith("595")) {
+    // 595 + 9 dígitos locales
+    return digits.length === 12;
+  }
+  if (digits.startsWith("1")) {
+    // 1 + 10 dígitos locales
+    return digits.length === 11;
+  }
+  return false;
+}
+
+async function lookupCustomerByPhone(phoneCanonical) {
+  if (!phoneCanonical) return null;
+  const url = `${CUSTOMERS_LOOKUP_URL}?phone=${encodeURIComponent(phoneCanonical)}`;
+  try {
+    const resp = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data.ok) return null;
+    return data.customer || null;
+  } catch (e) {
+    console.error("Error lookup customer", e);
+    return null;
+  }
+}
+
+// countrySelId: select con PY/US
+// phoneInputId: input de teléfono
+// nameInputId : input de nombre (para autocompletar)
+function setupCountryPhonePair(countrySelId, phoneInputId, nameInputId) {
+  const $country = document.getElementById(countrySelId);
+  const $phone   = document.getElementById(phoneInputId);
+  const $name    = nameInputId ? document.getElementById(nameInputId) : null;
+
+  if (!$country || !$phone) return;
+
+  function applyPlaceholder(country) {
+    if (country === "PY") {
+      $phone.placeholder = "+595 9xx xxx xxx";
+    } else {
+      $phone.placeholder = "+1 XXX XXX XXXX";
+    }
+  }
+
+  function formatAndSetValue() {
+    const country = $country.value;
+    let digits = onlyDigits($phone.value || "");
+
+    if (country === "PY") {
+      // Quitamos 595 si viene, y nos quedamos con locales
+      if (digits.startsWith("595")) {
+        digits = digits.slice(3);
+      }
+      digits = digits.slice(0, 9); // 9 dígitos locales
+      const localFormatted = formatLocalPY(digits);
+      $phone.value = "+595" + (localFormatted ? " " + localFormatted : " ");
+    } else {
+      // US
+      if (digits.startsWith("1")) {
+        digits = digits.slice(1);
+      }
+      digits = digits.slice(0, 10); // 10 dígitos locales
+      const localFormatted = formatLocalUS(digits);
+      $phone.value = "+1" + (localFormatted ? " " + localFormatted : " ");
+    }
+  }
+
+  // Al cambiar el país, reformateamos y fijamos prefijo
+  $country.addEventListener("change", () => {
+    applyPlaceholder($country.value);
+    formatAndSetValue();
+  });
+
+  // Inicial
+  applyPlaceholder($country.value);
+  formatAndSetValue();
+
+  // Mientras escribe, sólo dejamos dígitos y reformateamos
+  $phone.addEventListener("input", () => {
+    formatAndSetValue();
+  });
+
+  // Al salir del input: validar + lookup + autocompletar nombre
+ $phone.addEventListener("blur", async function () {
+    const raw = (this.value || "").trim();
+    const country = $country.value;
+    const formGroup = this.closest(".col-md-3, .col-md-4, .col-md-6, .col-md-12") || this.parentElement;
+    const invalidFeedback = formGroup.querySelector(".invalid-feedback");
+
+    if (!raw) return;
+
+    const canonical = buildCanonicalPhone(country, raw);
+
+    if (!canonical || !isValidPhone(canonical)) {
+      this.classList.add("is-invalid");
+      if (invalidFeedback) invalidFeedback.style.display = "block";
+      return;
+    } else {
+      this.classList.remove("is-invalid");
+      if (invalidFeedback) invalidFeedback.style.display = "none";
+    }
+
+    const customer = await lookupCustomerByPhone(canonical);
+
+    if (customer && customer.name) {
+      if ($name) {
+        $name.value = customer.name;
+      }
+      // 👇 si es el teléfono principal de GOODS, guardamos el id
+      if (phoneInputId === "goods-customer-phone") {
+        state.customer_id = customer.id || null;
+      }
+    } else {
+      // no hay customer, dejamos que el usuario escriba el nombre
+      if (phoneInputId === "goods-customer-phone") {
+        state.customer_id = null;
+      }
+    }
+  });
+}
+
+// ========= HOOK DE INICIALIZACIÓN =========
+document.addEventListener("DOMContentLoaded", function () {
+  // GOODS
+  setupCountryPhonePair("goods-dst-country", "goods-customer-phone", "goods-customer-name");
+
+  // REMIT – remitente y receptor
+  setupCountryPhonePair("remit-sender-country", "remit-sender-phone", "remit-sender-name");
+  setupCountryPhonePair("remit-receiver-country", "remit-receiver-phone", "remit-receiver-name");
+
+  // Lógica de países opuestos para remitente/receptor
+  const senderCountry   = document.getElementById("remit-sender-country");
+  const receiverCountry = document.getElementById("remit-receiver-country");
+
+  if (senderCountry && receiverCountry) {
+    senderCountry.addEventListener("change", function () {
+      // Si cambia el remitente, seteamos el opuesto por defecto
+      receiverCountry.value = (this.value === "US") ? "PY" : "US";
+      // Disparamos re-formateo en el input de receptor
+      const ev = new Event("input", { bubbles: true });
+      document.getElementById("remit-receiver-phone").dispatchEvent(ev);
+    });
+  }
+});
 /* ===== Cargar FX para GOODS (siempre USD/PYG) ===== */
 async function loadFxGoods(){
   try {
-    const res = await fetch('/config/api/fx/latest?pair=USD/PYG');
+    // Se usa el listado existente /config/api/fx y se toma el primer ítem como "latest"
+    const res = await fetch('/config/api/fx');
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
 
-    // Soportar varios formatos: {rate,...} || {fx:{...}} || {item:{...}}
-    const fxObj = (json && (json.fx || json.item || json.value)) || json || {};
+    const items = json.items || json.value || [];
+    const fxObj = Array.isArray(items) && items.length ? items[0] : (json.fx || json.item || json || {});
 
     const rate = Number(fxObj.rate || 0) || null;
     const date = fxObj.date || null;
@@ -679,10 +904,9 @@ async function recalcPrices(){
 
   const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
 
-  // Modo SIN fee: solo costo + shipping, sin markup
   if(state.fee_mode === 'NONE'){
     const totalCosto  = itemsTotal;
-    const totalPrecio = totalCosto + shippingCost;  // siempre suma envío si está activo
+    const totalPrecio = totalCosto + shippingCost;
     const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
 
     const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -695,8 +919,6 @@ async function recalcPrices(){
 
     recalcTotals();
 
-    // Si ya tenemos FX precargado desde loadFxGoods,
-    // precomputamos también amounts para GOODS.
     if (state.fx_rate_goods) {
       const rate = state.fx_rate_goods;
       const diffUsd = totalPrecio - totalCosto;
@@ -720,7 +942,6 @@ async function recalcPrices(){
     return;
   }
 
-  // Con fee: pedir cotización al proxy, pasando shipping_cost
   try {
     const res = await fetch('/cases/quote', {
       method: 'POST',
@@ -748,9 +969,8 @@ async function recalcPrices(){
       throw new Error('Formato de respuesta inválido');
     }
 
-    const quote = node.quote; // { base, fee_amount, fee_type, fees_available, total, fx? }
+    const quote = node.quote;
 
-    // 1) Repartir el total USD a los items
     const totalPrecio = Number(quote.total || 0);
     const totalCosto  = itemsTotal;
     const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
@@ -765,7 +985,6 @@ async function recalcPrices(){
 
     recalcTotals();
 
-    // 2) Capturar FX igual que en REMIT, si el backend lo devuelve
     const fxObj = node.fx || quote.fx || null;
     if (fxObj && fxObj.rate != null) {
       const rate = Number(fxObj.rate);
@@ -797,7 +1016,6 @@ async function recalcPrices(){
   }
 }
 
-
 function recalcTotals(){
   const rows = Array.from(tbody.querySelectorAll('tr'));
   let sumQty=0, sumCost=0, sumPrice=0;
@@ -819,7 +1037,6 @@ function recalcTotals(){
 }
 
 /* ===== Cotización REMIT ===== */
-
 function updateRemitQuoteUI(quote){
   const amt = Number(state.amount_usd || 0);
   const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
@@ -883,7 +1100,6 @@ function updateRemitQuoteUI(quote){
   document.getElementById('remit-total-price').innerText = 'USD ' + totalUsd.toFixed(2);
   document.getElementById('remit-total-diff').innerText  = 'USD ' + (totalUsd - amt).toFixed(2);
 }
-
 
 async function recalcRemit(){
   if (state.case_type !== 'REMIT') return;
@@ -1044,9 +1260,85 @@ function renderHumanReview(){
   }
 }
 
+async function ensureCustomerForCase() {
+  let name, phone, country;
+
+  if (state.case_type === 'GOODS') {
+    name    = (state.customer.name  || '').trim();
+    phone   = (state.customer.phone || '').trim();
+    country = state.destination.country || 'PY';
+  } else {
+    // Para REMIT, tomamos como "cliente principal" al remitente
+    name    = (state.sender.name  || '').trim();
+    phone   = (state.sender.phone || '').trim();
+    country = state.sender.country || 'US';
+  }
+
+  if (!name || !phone) {
+    // fallback: no podemos crear customer, se usará el default 1
+    return state.customer_id || 1;
+  }
+
+  const canonical = buildCanonicalPhone(country, phone);
+  if (!canonical) {
+    return state.customer_id || 1;
+  }
+
+  // Si ya tenemos un id (por lookup previo), usamos ese
+  if (state.customer_id) {
+    return state.customer_id;
+  }
+
+  // 1) Re-intentamos lookup, por si alguien más lo creó
+  const existing = await lookupCustomerByPhone(canonical);
+  if (existing && existing.id) {
+    state.customer_id = existing.id;
+    return existing.id;
+  }
+
+  // 2) Crear nuevo customer vía proxy web
+  try {
+    const resp = await fetch('/cases/customer-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        phone: canonical
+      })
+    });
+
+    const txt = await resp.text();
+    let json; try { json = JSON.parse(txt); } catch { json = null; }
+
+    if (!resp.ok || !json || json.ok !== true) {
+      console.error('error creando customer', resp.status, txt);
+      return state.customer_id || 1;
+    }
+
+    const newId = json.id || (json.customer && json.customer.id);
+    if (newId) {
+      state.customer_id = newId;
+      return newId;
+    }
+  } catch (e) {
+    console.error('ensureCustomerForCase error', e);
+  }
+
+  return state.customer_id || 1;
+}
+
+
 /* ===== Crear caso ===== */
 document.getElementById('btn-create').addEventListener('click', async ()=>{
   if(!validate(3)) return;
+
+  // Aseguramos que el estado tenga los datos de contacto
+  await syncFromUI(2);
+
+  // Crear u obtener el customer en backend
+  const cid = await ensureCustomerForCase();
+  state.customer_id = cid;
+
   const payload = buildPayload();
 
   const r = await fetch('/cases/create', {
@@ -1071,7 +1363,6 @@ document.getElementById('btn-create').addEventListener('click', async ()=>{
 
 /* ===== buildPayload: meta ESTÁNDAR ===== */
 function buildPayload() {
-  // Común: kind, notify, fee_mode, notes
   var meta = {
     kind:     state.case_type,
     notify:   state.notify || 'BOTH',
@@ -1079,7 +1370,6 @@ function buildPayload() {
     notes:    state.notes || null
   };
 
-  // Siempre definimos sender/receiver en meta
   if (state.case_type === 'GOODS') {
     meta.sender = {
       name:    state.customer.name,
@@ -1100,10 +1390,7 @@ function buildPayload() {
     };
   }
 
-  // Normalizamos amounts y bloques goods/remit
   if (state.case_type === 'GOODS') {
-    /* ---------- GOODS ---------- */
-    // Totales en USD
     var totalCostUsd  = 0;
     var totalPriceUsd = 0;
 
@@ -1125,7 +1412,6 @@ function buildPayload() {
 
     const diffUsd = totalPriceUsd - totalCostUsd;
 
-    // FX para GOODS (si la tenemos)
     var fxRateGoods = state.fx_rate_goods || null;
     var fxDateGoods = state.fx_goods_date || new Date().toISOString().slice(0,10);
     var fxPairGoods = state.fx_goods_pair || 'USD/PYG';
@@ -1136,7 +1422,6 @@ function buildPayload() {
       rate: fxRateGoods
     };
 
-    // amounts: base / fee / total en ambas monedas
     if (fxRateGoods) {
       meta.amounts = {
         base: {
@@ -1153,7 +1438,6 @@ function buildPayload() {
         }
       };
     } else {
-      // Sin FX (falló endpoint): guardamos igual en USD
       meta.amounts = {
         base:  { usd: totalCostUsd,  pyg: 0 },
         fee:   { usd: diffUsd,       pyg: 0 },
@@ -1161,7 +1445,6 @@ function buildPayload() {
       };
     }
 
-    // Bloque específico GOODS
     meta.goods = {
       destination: {
         country: state.destination.country || 'PY'
@@ -1174,11 +1457,9 @@ function buildPayload() {
       items: items
     };
 
-    // REMIT no aplica
     meta.remit = null;
 
   } else {
-    /* ---------- REMIT ---------- */
     var baseUsd  = Number(state.amount_usd || 0);
     var feeUsd   = Number(state.remit_fee_amount || 0);
     var totalUsd = Number(state.remit_total_charge || 0);
@@ -1212,26 +1493,24 @@ function buildPayload() {
       };
     }
 
-    // Bloque específico REMIT
     const direction = `${state.sender.country || 'US'}→${state.receiver.country || 'PY'}`;
     meta.remit = {
       amount_usd: baseUsd,
       direction:  direction
     };
 
-    // GOODS no aplica
     meta.goods = null;
   }
 
-  // Payload final hacia backend
   return {
     case_type:   state.case_type,
-    customer_id: 2,  // placeholder
-    contact_id:  1,  // placeholder
+    customer_id: state.customer_id || 1,
+    contact_id:  1,
     title:       (state.case_type === 'GOODS') ? 'GOODS Selva' : 'REMIT Selva',
     meta:        meta
   };
 }
+
 
 /* ===== Init ===== */
 document.getElementById('in-case-type').addEventListener('change', ()=> syncFromUI(1));
@@ -1242,7 +1521,6 @@ document.getElementById('in-fee-mode').addEventListener('change', async ()=>{
   if (cur === 4) renderHumanReview();
 });
 
-// Recalcular REMIT cuando cambia monto
 document.getElementById('remit-amount').addEventListener('input', async ()=>{
   await syncFromUI(3);
 });
