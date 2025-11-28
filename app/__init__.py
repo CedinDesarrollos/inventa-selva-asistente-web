@@ -34,10 +34,12 @@ def create_app():
     from .blueprints.cases import bp as cases_bp
     from .blueprints.sla import bp as sla_bp
     from .blueprints.config_bp import bp as config_bp
+    from .blueprints.chat import bp as chat_bp
 
     app.register_blueprint(dashboard_bp, url_prefix="/")
     app.register_blueprint(cases_bp, url_prefix="/cases")
     app.register_blueprint(sla_bp, url_prefix="/sla")
     app.register_blueprint(config_bp, url_prefix="/config")
+    app.register_blueprint(chat_bp, url_prefix="/chat")
 
     return app

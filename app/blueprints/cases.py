@@ -15,15 +15,65 @@ def list_cases():
     return render_template("cases/list.html", items=data.get("items", []))
 
 @bp.get("/<int:case_id>")
-def detail(case_id):
+def case_detail(case_id: int):
+    """
+    Renderiza la vista de detalle de un caso:
+    - Estado actual
+    - Datos de cliente/contacto
+    - Historial de eventos
+    """
     token = request.cookies.get("jwt")
-    resp = get(f"/api/cases/{case_id}", headers=auth_header(token))
-    data = resp.json()
-    print(f"Payload del evento: {data}")
-    if not data.get("ok"):
-        abort(resp.status_code)
-    case = data["case"]
-    return render_template("cases/detail.html", c=case)
+    headers = auth_header(token) if token else {}
+
+    r = get(f"/api/cases/{case_id}", headers=headers)
+    if r.status_code != 200:
+        # Si el backend devuelve 404 u otro error, mostramos algo razonable
+        try:
+            data = r.json()
+            msg = data.get("error") or f"backend devolvió {r.status_code}"
+        except Exception:
+            msg = f"backend devolvió {r.status_code}"
+        abort(r.status_code, description=msg)
+
+    data = r.json()
+    case = data.get("case") or {}
+
+    return render_template("cases/detail.html", case=case)
+
+@bp.post("/<int:case_id>/state")
+def case_change_state(case_id: int):
+    """
+    Proxy para cambiar el estado del caso desde la web.
+
+    Espera un JSON como:
+    {
+      "new_state": "PAGADO",
+      "actor": "user:alguien@dominio",
+      "force": false,
+      "payload": {
+        "reason": "...",
+        "comment": "..."
+      }
+    }
+    """
+    token = request.cookies.get("jwt")
+    headers = auth_header(token) if token else {}
+
+    payload = request.get_json(force=True) or {}
+
+    r = post(f"/api/cases/{case_id}/state", json=payload, headers=headers)
+
+    # Devolvemos el JSON tal cual para que el JS del frontend decida qué hacer
+    try:
+        data = r.json()
+    except Exception:
+        data = {
+            "ok": False,
+            "error": "backend no devolvió JSON",
+            "status_code": r.status_code,
+        }
+
+    return jsonify(data), r.status_code
 
 @bp.post("/<int:case_id>/event")
 def add_event(case_id):

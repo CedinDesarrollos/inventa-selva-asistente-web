@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set c = case %}   {# 👈 alias, para que todo el resto siga funcionando #}
+
 <style>
   .case-header-card{
     border:0;
@@ -749,6 +751,28 @@ const CASE_TYPE = META.kind || '{{ c.case_type or c.type }}' || 'GOODS';
 let editMode     = false;
 let pricingRules = {};  // { GOODS: {fee_pct, fee_flat}, REMIT: {...} }
 
+// Transiciones MANUALES permitidas desde la web.
+// El backend igual valida contra case_state_transitions.
+const STATE_TRANSITIONS = {
+  "GOODS": {
+    "NUEVO":           ["PAGADO", "CANCELADO"],
+    "PAGO_PENDIENTE":  ["PAGADO", "CANCELADO"],
+    "PAGADO":          ["COMPRADO_US"],
+    "COMPRADO_US":     ["ENVIADO_A_PY"],
+    "ENVIADO_A_PY":    ["LISTO_PARA_RETIRO"],
+    "LISTO_PARA_RETIRO": ["ENTREGADO"]
+    // ENTREGADO / CANCELADO / EXPIRADO: sin transiciones manuales
+  },
+  "REMIT": {
+    "NUEVO":          ["PAGADO", "CANCELADO"],
+    "PAGO_PENDIENTE": ["PAGADO", "CANCELADO"],
+    "PAGADO":         ["ENVIADO"],
+    "ENVIADO":        ["ENTREGADO"]
+    // ENTREGADO / CANCELADO / EXPIRADO: sin transiciones manuales
+  }
+};
+
+
 const state = {
   case_type: CASE_TYPE,
   fee_mode: META.fee_mode || 'PCT',
@@ -803,18 +827,92 @@ function inferPairFromCountries(senderCountry, receiverCountry){
 }
 
 /* ========================================================= */
-/* ======  PARTE 1: Cambiar estado + Adjuntos (igual)  ===== */
+/* ======  PARTE 1: Cambiar estado + Adjuntos (nuevo)  ===== */
 /* ========================================================= */
 
 document.getElementById('btn-advance').onclick = async () => {
-  const next = prompt('Estado/evento a aplicar (ej: ENVIADO_A_PY, LISTO_PARA_RETIRO, etc.)');
-  if(!next) return;
-  const r = await appPost(`/cases/${CASE_ID}/event`, { event: next });
-  toast(JSON.stringify(r, null, 2));
-  if(r.new_state){
+  const currentState = '{{ c.state }}';
+  const caseType = CASE_TYPE || '{{ c.case_type or c.type }}' || 'GOODS';
+
+  const transitionsForType = STATE_TRANSITIONS[caseType] || {};
+  const allowed = transitionsForType[currentState] || [];
+
+  if (allowed.length === 0) {
+    toast(`No hay transiciones manuales disponibles desde el estado ${currentState}`);
+    return;
+  }
+
+  // Armamos un prompt con opciones numeradas
+  let msg = `Estado actual: ${currentState}\n\nSeleccioná el nuevo estado:\n`;
+  allowed.forEach((st, idx) => {
+    msg += `${idx + 1}) ${st}\n`;
+  });
+  msg += `\nPodés escribir el número o el nombre exacto del estado.`;
+
+  const answer = prompt(msg);
+  if (!answer) return;
+
+  let newState = null;
+  const trimmed = answer.trim();
+
+  if (allowed.includes(trimmed)) {
+    newState = trimmed;
+  } else {
+    const idx = parseInt(trimmed, 10);
+    if (!Number.isNaN(idx) && idx >= 1 && idx <= allowed.length) {
+      newState = allowed[idx - 1];
+    }
+  }
+
+  if (!newState) {
+    toast('Opción inválida');
+    return;
+  }
+
+  try {
+    const resp = await fetch(`/cases/${CASE_ID}/state`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        new_state: newState,
+        actor: 'web:admin',           // si luego tenés el usuario logueado, lo cambiás aquí
+        force: false,
+        payload: {
+          reason: 'cambio_manual',
+          source: 'web_panel'
+        }
+      })
+    });
+
+    const data = await resp.json().catch(() => ({}));
+
+    if (!resp.ok || data.ok === false) {
+      const errMsg = (data && data.error) ? data.error : `Error HTTP ${resp.status}`;
+      toast(`No se pudo cambiar el estado: ${errMsg}`);
+      console.error('state change error', data);
+      return;
+    }
+
+    // Actualizar pill en la UI
     const lbl = document.getElementById('lbl-state');
-    lbl.innerText = r.new_state;
-    lbl.className = 'pill-state ' + r.new_state;
+    const updatedCase = data.case || {};
+    const newStateFinal = updatedCase.state || newState;
+
+    if (lbl) {
+      lbl.innerText = newStateFinal;
+      lbl.className = 'pill-state ' + newStateFinal;
+    }
+
+    toast(`Estado cambiado a ${newStateFinal}`);
+
+    // Si querés refrescar todo el historial/eventos:
+    // location.reload();
+
+  } catch (e) {
+    console.error('state change exception', e);
+    toast('Error de red al cambiar estado');
   }
 };
 

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .chat-wrapper{
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .chat-card{
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(15,23,42,.12);
+    overflow: hidden;
+  }
+  .chat-header{
+    background: linear-gradient(135deg, #4f46e5, #0ea5a4);
+    color: #fff;
+  }
+  .chat-header h5{
+    margin: 0;
+    font-weight: 600;
+  }
+  .chat-header small{
+    opacity: .9;
+  }
+  .chat-body{
+    background: #0b1220;
+    background: radial-gradient(900px 600px at 10% -10%, rgba(79,70,229,.25), transparent),
+                radial-gradient(900px 600px at 90% 110%, rgba(14,165,164,.2), transparent),
+                #020617;
+    color: #e5e7eb;
+    height: 70vh;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  .msg-row{
+    display: flex;
+    margin-bottom: .75rem;
+  }
+  .msg-row.viki{
+    justify-content: flex-start;
+  }
+  .msg-row.user{
+    justify-content: flex-end;
+  }
+  .msg-bubble{
+    max-width: 75%;
+    padding: .6rem .8rem;
+    border-radius: .9rem;
+    font-size: .9rem;
+    line-height: 1.35;
+    box-shadow: 0 6px 18px rgba(15,23,42,.35);
+    word-break: break-word;
+  }
+  .msg-row.viki .msg-bubble{
+    border-bottom-left-radius: .2rem;
+    background: rgba(15,23,42,.85);
+    border: 1px solid rgba(148,163,184,.35);
+  }
+  .msg-row.user .msg-bubble{
+    border-bottom-right-radius: .2rem;
+    background: linear-gradient(135deg,#4f46e5,#0ea5a4);
+    color: #f9fafb;
+  }
+  .msg-meta{
+    display: block;
+    font-size: .7rem;
+    opacity: .7;
+    margin-top: .15rem;
+  }
+  .chat-footer{
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+  }
+</style>
+
+<div class="chat-wrapper mt-3 mb-4">
+  <div class="card chat-card">
+    <div class="card-header chat-header d-flex align-items-center justify-content-between">
+      <div>
+        <h5>💬 Chat con Viki</h5>
+        <small>Asistente virtual de Selva · te ayuda a crear y gestionar casos GOODS y REMIT.</small>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-success-subtle text-bg-success">
+          <span class="me-1">🟢</span>En línea
+        </span>
+      </div>
+    </div>
+
+    <div class="card-body chat-body" id="chat-messages">
+      <div class="msg-row viki">
+        <div class="msg-bubble">
+          <strong>Viki:</strong> Hola {{ username }} 👋🏻.<br>
+          Soy tu asistente. Podés decirme cosas como:<br>
+          <span class="msg-meta">
+            • “Quiero crear un caso GOODS para Lili por 200 USD”<br>
+            • “Listá mis casos abiertos”<br>
+            • “Cotizá un remit de 1000 USD a Paraguay”
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer chat-footer">
+      <form id="chat-form" class="d-flex gap-2 align-items-end">
+        <div class="flex-grow-1">
+          <label for="chat-input" class="form-label small mb-1 text-muted">
+            Escribe tu mensaje para Viki
+          </label>
+          <textarea id="chat-input" class="form-control" rows="2"
+            placeholder="Ej: Viki, creá un GOODS para Chari por 150 USD..."></textarea>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <!-- Aquí en el futuro podés agregar botón de adjuntar archivos -->
+          <button type="submit" class="btn btn-primary px-3">
+            Enviar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const elMessages = document.getElementById('chat-messages');
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-input');
+
+  const USERNAME = "{{ username|default('Usuario Web') }}";
+
+  function scrollBottom(){
+    elMessages.scrollTop = elMessages.scrollHeight;
+  }
+
+  function appendMessage(kind, text){
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + kind;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+
+    if(kind === 'user'){
+      bubble.innerHTML = '<strong>' + USERNAME + ':</strong> ' + text;
+    } else if(kind === 'viki'){
+      bubble.innerHTML = '<strong>Viki:</strong> ' + text;
+    } else {
+      bubble.innerHTML = text;
+    }
+
+    row.appendChild(bubble);
+    elMessages.appendChild(row);
+    scrollBottom();
+  }
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const text = (input.value || '').trim();
+    if(!text){ return; }
+
+    // Muestra mensaje del usuario
+    appendMessage('user', text);
+    input.value = '';
+    input.focus();
+
+    try{
+      const res = await fetch("/chat/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: text,
+          username: USERNAME
+          // Aquí podrías pasar identity_id, identity_rol, etc. si los sacas del backend
+        })
+      });
+
+      const data = await res.json();
+      if(!data.ok){
+        appendMessage('system', '⚠️ Error: ' + (data.error || 'no se pudo procesar la respuesta'));
+        return;
+      }
+
+      const reply = data.reply_text || '...';
+      appendMessage('viki', reply);
+
+    } catch(err){
+      console.error(err);
+      appendMessage('system', '⚠️ Error de conexión con Viki.');
+    }
+  });
+})();
+</script>
+
+{% endblock %}

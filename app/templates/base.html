@@ -27,6 +27,11 @@
       <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
       <li class="nav-item"><a class="nav-link" href="/cases/">Casos</a></li>
       <li class="nav-item"><a class="nav-link" href="/config/">Config</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('chat.chat_home') }}">
+          <span class="me-2">💬</span> Chat con Viki
+        </a>
+      </li>
     </ul>
     <button id="btn-logout" class="btn btn-outline-secondary btn-sm">Salir</button>
   </div>

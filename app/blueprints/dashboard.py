@@ -58,15 +58,33 @@ def index():
     token = request.cookies.get("jwt")
     headers = auth_header(token)
 
+    def debug_get(path: str, headers: dict):
+        r = get(path, headers=headers)
+
+        # Logueamos SIEMPRE el status
+        print(f"[DEBUG] GET {path} -> {getattr(r, 'status_code', None)}")
+
+        try:
+            data = r.json()
+            print(f"[DEBUG] JSON: {data}")
+        except Exception as e:
+            print(f"[DEBUG] No se pudo parsear JSON: {e}")
+            print(f"[DEBUG] Texto crudo: {getattr(r, 'text', None)}")
+            data = None
+
+        return r, data
+
+
     # 1) Casos
-    r_cases = get("/api/cases", headers=headers)
-    cases_raw = (r_cases.json() or {}).get("items", []) if getattr(r_cases, "ok", False) else []
-    
+    r_cases, data_cases = debug_get("/api/cases", headers=headers)
+    cases_raw = (data_cases or {}).get("items", []) if getattr(r_cases, "ok", False) else []
+    print(f"Cases Raw: {cases_raw}")
 
     # 2) SLA
-    r_sla = get("/api/cases/sla-breaches", headers=headers)
-    sla_breaches = (r_sla.json() or {}).get("items", []) if getattr(r_sla, "ok", False) else []
+    r_sla, data_sla = debug_get("/api/sla/breaches", headers=headers)
+    sla_breaches = (data_sla or {}).get("items", []) if getattr(r_sla, "ok", False) else []
     print(f"SLA Breaches: {sla_breaches}")
+
 
     # 3) Resolver nombres de clientes (SECUENCIAL, sin threads)
     customer_ids = {c.get("customer_id") for c in cases_raw if c.get("customer_id")}
