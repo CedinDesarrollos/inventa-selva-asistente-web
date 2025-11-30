@@ -697,38 +697,120 @@
         <span>Adjuntos</span>
       </div>
       <div class="card-body">
-        {% if c.attachments and c.attachments|length %}
-          <ul class="list-unstyled mb-3" id="attachments-list">
-            {% for a in c.attachments %}
-              <li class="mb-2">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    {% if a.kind %}
-                      <span class="chip-attachment-kind">{{ a.kind }}</span>
-                    {% endif %}
-                    <div class="small">
-                      {% if a.url %}
-                        <a href="{{ a.url }}" target="_blank" rel="noopener">
+
+        {# === Resultado del último comprobante analizado (si existe) === #}
+        {% set last_att = (c.attachments|last) if c.attachments else None %}
+        {% if last_att and last_att.meta and last_att.meta.comparison %}
+          {% set cmp = last_att.meta.comparison %}
+
+          {% if cmp.status == 'MATCH' %}
+            <div class="alert alert-success small mb-3" id="payment-alert">
+              ✅ Pago procesado correctamente.<br>
+              Monto detectado: {{ cmp.paid_display or 'N/D' }}<br>
+              Esperado: {{ cmp.expected_display or 'N/D' }}.
+              <div class="mt-2">
+                <button class="btn btn-sm btn-light" id="btn-approve-payment">
+                  Cambiar estado a PAGADO
+                </button>
+              </div>
+            </div>
+
+          {% elif cmp.status == 'MISMATCH' %}
+            <div class="alert alert-warning small mb-3" id="payment-alert">
+              ⚠️ Comprobante recibido pero el monto no coincide.<br>
+              Monto detectado: {{ cmp.paid_display or 'N/D' }}<br>
+              Esperado: {{ cmp.expected_display or 'N/D' }}<br>
+              Diferencia: {{ cmp.diff_display or 'N/D' }}.
+              <div class="mt-2 d-flex gap-2">
+                <button class="btn btn-sm btn-outline-success" id="btn-approve-payment">
+                  Aprobar de todas formas (PAGADO)
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-keep-state">
+                  Mantener estado actual
+                </button>
+              </div>
+            </div>
+
+          {% elif cmp.status == 'UNKNOWN' %}
+            <div class="alert alert-secondary small mb-3" id="payment-alert">
+              ℹ️ Comprobante recibido. No se pudo comparar automáticamente el monto, revisar manualmente.
+            </div>
+          {% endif %}
+        {% endif %}
+
+        {# === Lista de adjuntos === #}
+          {% if c.attachments and c.attachments|length %}
+            <ul class="list-unstyled mb-3" id="attachments-list">
+              {% for a in c.attachments %}
+                <li class="mb-2">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      {% if a.kind %}
+                        <span class="chip-attachment-kind">{{ a.kind }}</span>
+                      {% endif %}
+
+                      <div class="small">
+                        {% if a.url %}
+                          <a href="{{ a.url }}" target="_blank" rel="noopener">
+                            {{ a.key }}
+                          </a>
+                        {% else %}
                           {{ a.key }}
-                        </a>
-                      {% else %}
-                        {{ a.key }}
+                        {% endif %}
+                      </div>
+
+                      <div class="small-muted">
+                        {{ a.created_at.replace('T',' ')[:16] }}
+                      </div>
+
+                      {# --- Resumen de análisis si existe --- #}
+                        {% if a.meta and a.meta.extracted %}
+                          {% set ex = a.meta.extracted %}
+                          {% set cmp_item = a.meta.comparison if a.meta.comparison is defined else None %}
+                          <div class="small mt-1">
+                            <strong>Comprobante leído:</strong>
+                            {{ ex.currency_original or 'N/D' }}
+                            {{ ex.amount_original if ex.amount_original is not none else 'N/D' }}
+                            {% if ex.amount_usd %}
+                              (≈ {{ ex.amount_usd }} USD)
+                            {% endif %}
+                            <br>
+                            {% if cmp_item %}
+                              <strong>Resultado automático:</strong>
+                              {{ cmp_item.status }} – {{ cmp_item.message }}
+                            {% else %}
+                              <strong>Resultado automático:</strong>
+                              {{ ex.decision or 'NECESITA_REVISION' }}
+                            {% endif %}
+                            {% if ex.decision %}
+                              <br>
+                              <strong>Decisión IA:</strong> {{ ex.decision }}
+                            {% endif %}
+                          </div>
+
+
+                      {% elif a.meta and a.meta.analysis_status == 'RUNNING' %}
+                        <div class="small mt-1 text-muted">
+                          Analizando comprobante…
+                        </div>
+
+                      {% elif a.meta and a.meta.analysis_status == 'ERROR' %}
+                        <div class="small mt-1 text-danger">
+                          Error al analizar el comprobante.
+                        </div>
                       {% endif %}
                     </div>
-                    <div class="small-muted">
-                      {{ a.created_at.replace('T',' ')[:16] }}
-                    </div>
                   </div>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <div class="small-muted mb-2" id="attachments-empty">
-            Aún no hay adjuntos.
-          </div>
-          <ul class="list-unstyled mb-3 d-none" id="attachments-list"></ul>
-        {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="small-muted mb-2" id="attachments-empty">
+              Aún no hay adjuntos.
+            </div>
+            <ul class="list-unstyled mb-3 d-none" id="attachments-list"></ul>
+          {% endif %}
+
 
         <hr>
         <label class="form-label small">Subir nuevo adjunto</label>
@@ -737,6 +819,37 @@
           Subir adjunto
         </button>
         <div id="up-out" class="small mt-2 text-muted"></div>
+      </div>
+    </div>
+
+    
+    {# ==== Modal para mostrar el análisis del comprobante recién subido ==== #}
+    <div class="modal fade" id="attachmentAnalysisModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Resultado del comprobante</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <div id="attachment-analysis-body" class="small">
+              Cargando análisis...
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    id="modal-keep-state"
+                    data-bs-dismiss="modal">
+              Mantener estado
+            </button>
+            <button type="button"
+                    class="btn btn-sm btn-success"
+                    id="modal-approve-payment">
+              Marcar como PAGADO
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -916,34 +1029,181 @@ document.getElementById('btn-advance').onclick = async () => {
   }
 };
 
-document.getElementById('btn-upload').onclick = async () => {
-  const f = document.getElementById('file').files[0];
-  if(!f) return toast('Seleccioná un archivo');
-  try {
-    const presign = await appPostRaw(`/api/cases/${CASE_ID}/attachments/presign`, {
-      filename: f.name,
-      content_type: f.type || 'application/octet-stream'
-    });
+document.getElementById("btn-upload")?.addEventListener("click", async () => {
+  const fileEl = document.getElementById("file");
+  const outEl = document.getElementById("up-out");
 
-    await fetch(presign.upload_url, {
-      method:'PUT',
-      headers: {'Content-Type': f.type || 'application/octet-stream'},
-      body: f
-    });
-
-    const commit = await appPostRaw(`/api/cases/${CASE_ID}/attachments/commit`, {
-      key: presign.final_key
-    });
-
-    document.getElementById('up-out').innerText =
-      'Adjunto subido: ' + JSON.stringify(commit);
-
-    toast('Adjunto subido ✔');
-  } catch(err){
-    console.error(err);
-    toast('Error subiendo adjunto');
+  if (!fileEl.files.length) {
+    toast("Primero selecciona un archivo");
+    return;
   }
-};
+
+  const file = fileEl.files[0];
+  outEl.innerText = "Subiendo comprobante…";
+
+  try {
+    // 1) PRESIGN
+    const presignResp = await fetch(`/cases/${CASE_ID}/attachments/presign`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file.name,
+        content_type: file.type || "image/jpeg",
+      }),
+    });
+    const presign = await presignResp.json();
+    if (!presign.ok) {
+      toast("No se pudo preparar la subida");
+      outEl.innerText = "Error al preparar la subida.";
+      return;
+    }
+
+    // 2) SUBIR A R2
+    await fetch(presign.upload_url, {
+      method: "PUT",
+      headers: presign.headers || {},
+      body: file,
+    });
+
+    // 3) COMMIT + ANALYSIS
+    const commitResp = await fetch(`/cases/${CASE_ID}/attachments/commit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: presign.final_key,
+        kind: "COMPROBANTE",
+      }),
+    });
+
+    const commit = await commitResp.json();
+    if (!commit.ok) {
+      toast("No se pudo registrar el adjunto");
+      outEl.innerText = "Error al guardar el adjunto.";
+      return;
+    }
+
+    const meta = commit.meta || {};
+    const ex = meta.extracted || null;
+    const cmp = meta.comparison || null;
+
+    // Texto resumido debajo del input (se mantiene)
+    if (ex) {
+      const msg =
+        `Comprobante leído: ` +
+        `${ex.currency_original || ""} ${ex.amount_original ?? "N/D"}` +
+        (ex.amount_usd ? ` (≈ ${ex.amount_usd} USD)` : "") +
+        `. Decisión IA: ${ex.decision || "NECESITA_REVISION"}.`;
+      outEl.innerText = msg;
+    } else if (meta.analysis_status === "ERROR") {
+      outEl.innerText = "Se subió el comprobante, pero hubo un error al analizarlo.";
+    } else {
+      outEl.innerText = "Comprobante subido. Analizando…";
+    }
+
+    // Mostrar modal con detalle y opciones de acción
+    showAttachmentAnalysisModal(ex, cmp);
+
+    toast("Adjunto subido ✔");
+    // 🚫 Ya no recargamos automáticamente aquí.
+    // El usuario decidirá si cambia de estado o mantiene el actual.
+  } catch (err) {
+    console.error(err);
+    toast("Error inesperado al subir el adjunto");
+    outEl.innerText = "Error inesperado al subir el adjunto.";
+  }
+});
+
+function showAttachmentAnalysisModal(ex, cmp) {
+  const modalEl = document.getElementById("attachmentAnalysisModal");
+  const bodyEl  = document.getElementById("attachment-analysis-body");
+  if (!modalEl || !bodyEl) return;
+
+  const status   = (cmp && cmp.status) || "UNKNOWN";
+  const message  = (cmp && cmp.message) || "No se pudo comparar el monto del comprobante con el total esperado.";
+  const paidDisp = (cmp && cmp.paid_display) || "N/D";
+  const expDisp  = (cmp && cmp.expected_display) || "N/D";
+  const diffDisp = (cmp && cmp.diff_display) || "N/D";
+
+  let html = "";
+
+  html += `<p class="mb-1"><strong>Resultado automático:</strong> ${status}</p>`;
+  html += `<p class="mb-2">${message}</p>`;
+  html += `<ul class="mb-2 small">`;
+  html += `<li><strong>Monto detectado:</strong> ${paidDisp}</li>`;
+  html += `<li><strong>Monto esperado:</strong> ${expDisp}</li>`;
+  if (status !== "UNKNOWN") {
+    html += `<li><strong>Diferencia:</strong> ${diffDisp}</li>`;
+  }
+  html += `</ul>`;
+
+  if (ex && ex.decision) {
+    html += `<p class="mb-0 small text-muted">`;
+    html += `<strong>Decisión IA (campo decision):</strong> ${ex.decision}`;
+    html += `</p>`;
+  }
+
+  bodyEl.innerHTML = html;
+
+  // Pre-configuramos el texto del botón según status
+  const btnApprove = document.getElementById("modal-approve-payment");
+  const btnKeep    = document.getElementById("modal-keep-state");
+  if (btnApprove) {
+    btnApprove.textContent = (status === "MATCH")
+      ? "Marcar como PAGADO"
+      : "Aprobar igual (PAGADO)";
+  }
+  if (btnKeep) {
+    btnKeep.textContent = "Mantener estado";
+  }
+
+  // Handlers
+  if (btnApprove) {
+    btnApprove.onclick = async () => {
+      try {
+        const resp = await fetch(`/cases/${CASE_ID}/state`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            new_state: "PAGADO",
+            actor: "web:admin",
+            force: false,
+            payload: {
+              reason: status === "MATCH" ? "pago_confirmado_comprobante" : "pago_aprobado_manual",
+              source: "web_panel",
+            },
+          }),
+        });
+
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || data.ok === false) {
+          const msg = (data && data.error) || `Error HTTP ${resp.status}`;
+          toast("No se pudo cambiar a PAGADO: " + msg);
+          return;
+        }
+
+        toast("Caso marcado como PAGADO ✔");
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        bsModal.hide();
+        // Ahora sí recargamos para ver el nuevo estado y el alert superior actualizado
+        setTimeout(() => location.reload(), 700);
+      } catch (e) {
+        console.error(e);
+        toast("Error de red al aprobar pago");
+      }
+    };
+  }
+
+  if (btnKeep) {
+    btnKeep.onclick = () => {
+      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      bsModal.hide();
+      // No hacemos nada más, solo se guarda el adjunto y su análisis.
+    };
+  }
+
+  const bsModal = new bootstrap.Modal(modalEl);
+  bsModal.show();
+}
 
 /* ========================================================= */
 /* ==========  PARTE 2: Pricing + Edición de meta  ========= */
@@ -1484,6 +1744,49 @@ if(btnMeta){
     }
   });
 }
+
+// Botón para aprobar pago desde la sugerencia del comprobante
+const btnApprovePayment = document.getElementById('btn-approve-payment');
+if (btnApprovePayment) {
+  btnApprovePayment.onclick = async () => {
+    try {
+      const resp = await fetch(`/cases/${CASE_ID}/state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          new_state: 'PAGADO',
+          actor: 'web:admin',
+          force: false,
+          payload: {
+            reason: 'pago_confirmado_comprobante',
+            source: 'web_panel'
+          }
+        })
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || data.ok === false) {
+        const msg = (data && data.error) || `Error HTTP ${resp.status}`;
+        toast('No se pudo cambiar a PAGADO: ' + msg);
+        return;
+      }
+      toast('Caso marcado como PAGADO ✔');
+      setTimeout(() => location.reload(), 700);
+    } catch (e) {
+      console.error(e);
+      toast('Error de red al aprobar pago');
+    }
+  };
+}
+
+// Botón "mantener estado" simplemente oculta el alert
+const btnKeepState = document.getElementById('btn-keep-state');
+if (btnKeepState) {
+  btnKeepState.onclick = () => {
+    const alertEl = document.getElementById('payment-alert');
+    if (alertEl) alertEl.remove();
+  };
+}
+
 
 
 /* ---- Init ---- */

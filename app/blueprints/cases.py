@@ -3,6 +3,7 @@ from ..utils.api import get, post, patch
 from ..utils.auth import auth_header
 from urllib.parse import quote_plus
 from urllib.parse import urlencode
+from uuid import uuid4
 
 bp = Blueprint("cases", __name__, template_folder="../templates")
 
@@ -283,3 +284,90 @@ def customer_create_proxy():
             "error": "backend no devolvió JSON",
             "status_code": r.status_code,
         }), r.status_code
+    
+
+@bp.post("/<int:case_id>/attachments/presign")
+def attachments_presign(case_id: int):
+    token = request.cookies.get("jwt")
+    headers = auth_header(token) if token else {}
+
+    payload = request.get_json(force=True) or {}
+    filename = payload.get("filename") or "file.bin"
+    content_type = payload.get("content_type", "application/octet-stream")
+
+    key = f"cases/{case_id}/{uuid4().hex}-{filename}"
+
+    try:
+        r = post(
+            f"/api/cases/{case_id}/attachments/presign",
+            json={"key": key, "content_type": content_type},
+            headers=headers,
+        )
+    except Exception as e:
+        print("[proxy presign] error llamando backend:", repr(e))
+        return jsonify({
+            "ok": False,
+            "error": "No se pudo contactar al backend real en /attachments/presign",
+        }), 500
+
+    # Logueamos SIEMPRE la respuesta del backend real
+    print("[proxy presign] backend status:", r.status_code)
+    print("[proxy presign] backend body:", r.text)
+
+    try:
+        data = r.json()
+    except Exception:
+        return jsonify({
+            "ok": False,
+            "error": "backend no devolvió JSON en presign",
+            "status_code": r.status_code,
+        }), r.status_code
+
+    if not r.ok or not data.get("upload_url"):
+        return jsonify({
+            "ok": False,
+            "error": data.get("error") or "backend presign sin upload_url",
+            "status_code": r.status_code,
+        }), r.status_code
+
+    return jsonify({
+        "ok": True,
+        "upload_url": data["upload_url"],
+        "final_key": key,
+    }), 200
+
+@bp.post("/<int:case_id>/attachments/commit")
+def attachments_commit(case_id: int):
+    """
+    Proxy web -> backend real para registrar el adjunto.
+    Front manda:
+      { "key": "<final_key>", "kind"?: "COMPROBANTE", "meta"?: {...} }
+    """
+
+    token = request.cookies.get("jwt")
+    headers = auth_header(token) if token else {}
+
+    payload = request.get_json(force=True) or {}
+    key = payload.get("key")
+    if not key:
+        return jsonify({"ok": False, "error": "key requerido"}), 400
+
+    kind = payload.get("kind", "COMPROBANTE")
+    meta = payload.get("meta")
+
+    r = post(
+        f"/api/cases/{case_id}/attachments/commit",
+        json={"key": key, "kind": kind, "meta": meta},
+        headers=headers,
+    )
+
+    try:
+        data = r.json()
+    except Exception:
+        return jsonify({
+            "ok": False,
+            "error": "backend no devolvió JSON en commit",
+            "status_code": r.status_code,
+        }), r.status_code
+
+    return jsonify(data), r.status_code
