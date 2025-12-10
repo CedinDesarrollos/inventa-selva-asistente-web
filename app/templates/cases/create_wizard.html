@@ -1,591 +1,796 @@
-{% extends "base.html" %}
-{% block content %}
+  {% extends "base.html" %}
+  {% block content %}
 
-<style>
-  /* ===== Paleta ===== */
-  :root{
-    --bg: #0b1220;
-    --ink: #0f172a;
-    --muted: #6b7280;
-    --card: #ffffff;
-    --indigo: #4f46e5;
-    --teal: #0ea5a4;
-    --amber: #f59e0b;
-    --rose: #f43f5e;
-    --success: #16a34a;
-    --surface: #f7f8fb;
-    --hairline: #e5e7eb;
+  <style>
+    /* ===== Paleta ===== */
+    :root{
+      --bg: #f3f4f6;
+      --ink: #0f172a;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --indigo: #4f46e5;
+      --indigo-soft:#eef2ff;
+      --teal: #0ea5a4;
+      --amber: #f59e0b;
+      --rose: #f97373;
+      --success: #16a34a;
+      --surface: #f7f8fb;
+      --hairline: #e5e7eb;
+    }
+
+    body{
+      background-color: var(--bg);
+    }
+
+    /* ===== Card principal ===== */
+    .card.alt{
+      border: 1px solid var(--hairline);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--card);
+      box-shadow:
+        0 18px 40px rgba(15,23,42,.08),
+        0 0 0 1px rgba(148,163,184,.15);
+    }
+    .card.alt .card-header{
+      background: linear-gradient(180deg, rgba(15,23,42,.03), transparent);
+      border-bottom: 1px solid var(--hairline);
+      padding: .85rem 1.25rem;
+    }
+    .card.alt .card-body{
+      padding: 1rem 1.25rem 1.3rem;
+    }
+
+    /* ===== Mini header dentro de la card (reemplaza hero gigante) ===== */
+    .case-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:.75rem;
+    }
+    .case-header-main{
+      display:flex;
+      flex-direction:column;
+      gap:.15rem;
+    }
+    .case-title{
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 1.1rem;
+    }
+    .case-subtitle{
+      font-size:.85rem;
+      color:var(--muted);
+    }
+    .case-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:.35rem;
+    }
+
+    /* ===== Stepper ===== */
+    .stepper {
+      display:flex;
+      gap:.5rem;
+      margin: .9rem 0 1rem;
+      flex-wrap:wrap;
+    }
+    .stepper .step{
+      display:flex;
+      align-items:center;
+      gap:.45rem;
+      padding:.45rem .75rem;
+      border-radius:999px;
+      background:#f9fafb;
+      color:#4b5563;
+      font-weight:500;
+      border:1px solid #e5e7eb;
+      font-size:.82rem;
+      transition:background .2s ease, color .2s ease, box-shadow .2s ease, transform .15s ease;
+    }
+    .stepper .step .dot{
+      width:24px;
+      height:24px;
+      display:grid;
+      place-items:center;
+      font-size:.78rem;
+      border-radius:999px;
+      background:#e5e7eb;
+      color:#4b5563;
+      font-weight:600;
+    }
+    .stepper .step:hover{
+      transform: translateY(-1px);
+      box-shadow:0 6px 15px rgba(15,23,42,.07);
+    }
+    .step.active{
+      background:var(--indigo);
+      color:#fff;
+      border-color:var(--indigo);
+      box-shadow:0 10px 20px rgba(79,70,229,.35);
+    }
+    .step.active .dot{
+      background:#fff;
+      color:var(--indigo);
+    }
+    .step.done{
+      background:#ecfdf5;
+      color:#166534;
+      border-color:#bbf7d0;
+    }
+    .step.done .dot{
+      background:#22c55e;
+      color:#fff;
+    }
+
+    /* ===== Chips ===== */
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:.3rem;
+      padding:.22rem .6rem;
+      border-radius:999px;
+      font-weight:600;
+      font-size:.78rem;
+      border:1px solid var(--hairline);
+      background:#f9fafb;
+      color:var(--ink);
+    }
+    .chip.teal{ background:#ecfeff; border-color:#a5f3fc; color:#0f766e; }
+    .chip.amber{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+    .chip.rose{ background:#fff1f2; border-color:#fecdd3; color:#9f1239; }
+    .chip.indigo{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
+    .chip.success{ background:#ecfdf5; border-color:#bbf7d0; color:#065f46; }
+
+    /* ===== Tabla moderna ===== */
+    .table-modern{
+      --row-hover: #f6f7fb;
+      --thead:#0f172a; --thead-bg:#f3f4f6;
+      width:100%;
+      border-collapse: separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--hairline);
+      border-radius:12px;
+    }
+    .table-modern thead th{
+      background:var(--thead-bg);
+      color:var(--thead);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+      font-size:.78rem;
+      border-bottom:1px solid var(--hairline);
+    }
+    .table-modern th, .table-modern td{
+      padding:.6rem .75rem;
+      vertical-align:middle;
+    }
+    .table-modern tbody tr{ transition:background .15s ease; }
+    .table-modern tbody tr:hover{ background:var(--row-hover); }
+    .table-modern tfoot td, .table-modern tfoot th{
+      background:#fafafa;
+      border-top:2px solid var(--hairline);
+      font-weight:700;
+      position: sticky;
+      bottom: 0;
+      z-index: 1;
+    }
+
+    /* ===== Inputs compactos ===== */
+    .form-control, .form-select{ border-radius:10px; }
+    .form-text{ color: var(--muted); }
+
+    /* ===== Summary box ===== */
+    .summary-box{
+      background:linear-gradient(180deg,#f8fafc, #f1f5f9);
+      border:1px dashed #cbd5e1;
+      border-radius:12px;
+      padding:1rem;
+    }
+
+    /* ===== Botones ===== */
+    .btn-pill{ border-radius:999px; }
+    .btn-primary{ background:var(--indigo); border-color:var(--indigo); }
+    .btn-primary:hover{ background:#4338ca; border-color:#4338ca; }
+    .btn-outline-secondary{ border-radius:999px; }
+    .btn-success{ background:var(--success); border-color:var(--success); }
+
+    /* ===== Adornos ===== */
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap:.6rem;
+      font-weight:700;
+      color:var(--ink);
+      font-size:.98rem;
+      margin-top: .25rem;
+      margin-left: .5rem;
+    }
+    .section-title .bar{
+      width:8px;
+      height:8px;
+      border-radius:2px;
+      background:var(--teal);
+      box-shadow: 10px 0 0 var(--amber), 20px 0 0 var(--indigo);
+      margin-right: .75rem;
+    }
+
+    /* ===== Animación panes de paso ===== */
+    .step-pane{
+      /* estado base: invisible */
+      opacity:0;
+      transform: translateY(4px);
+    }
+    .step-pane.step-pane-enter{
+      animation: stepEnter .22s ease-out;
+      opacity:1;
+      transform: translateY(0);
+    }
+    @keyframes stepEnter{
+      from{
+        opacity:0;
+        transform: translateY(8px);
+      }
+      to{
+        opacity:1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== Resumen bonito ===== */
+  .review-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    margin-bottom: .5rem;
   }
 
-  /* ===== Hero header ===== */
-  .page-hero{
-    background: radial-gradient(1200px 600px at 10% -10%, rgba(79,70,229,.25), transparent 60%),
-                radial-gradient(900px 500px at 100% 0%, rgba(14,165,164,.2), transparent 55%);
-    background-color: var(--bg);
-    color:#fff; border-radius: 16px; padding: 1rem 1.25rem; margin-bottom: 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,.12);
-  }
-  .page-hero h2{ font-weight: 800; letter-spacing:.2px; margin:0; }
-  .page-hero small{ opacity:.9 }
-
-  /* ===== Card ===== */
-  .card.alt{
-    border: 1px solid var(--hairline); border-radius: 14px; overflow: hidden; background: var(--card);
-    box-shadow: 0 6px 20px rgba(2,8,23,.05);
-  }
-  .card.alt .card-header{
-    background: linear-gradient(180deg, rgba(15,23,42,.04), transparent);
-    border-bottom: 1px solid var(--hairline);
+  .review-section-title {
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: .25rem;
   }
 
-  /* ===== Stepper ===== */
-  .stepper { display:flex; gap:.5rem; margin-bottom:1rem; flex-wrap:wrap; }
-  .stepper .step{
-    display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:999px;
-    background:#eef2ff; color:#4338ca; font-weight:600; border:1px solid #e0e7ff; transition:all .2s ease;
-  }
-  .stepper .step .dot{
-    width:26px; height:26px; display:grid; place-items:center; font-size:.9rem; border-radius:999px;
-    background:#e0e7ff; color:#4338ca;
-  }
-  .stepper .step:hover{ transform: translateY(-1px); }
-  .step.active{ background:var(--indigo); color:#fff; border-color:var(--indigo); }
-  .step.active .dot{ background:#fff; color:var(--indigo); }
-  .step.done{ background:#d1fae5; color:#065f46; border-color:#bbf7d0; }
-  .step.done .dot{ background:#10b981; color:#fff; }
-  .step.small{ opacity:.9; font-weight:500; }
-
-  /* ===== Chips ===== */
-  .chip{
-    display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; border-radius:999px; font-weight:600;
-    font-size:.8rem; border:1px solid var(--hairline); background:#f8fafc; color:var(--ink);
-  }
-  .chip.teal{ background:#ecfeff; border-color:#a5f3fc; color:#0f766e; }
-  .chip.amber{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
-  .chip.rose{ background:#fff1f2; border-color:#fecdd3; color:#9f1239; }
-  .chip.indigo{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
-  .chip.success{ background:#ecfdf5; border-color:#bbf7d0; color:#065f46; }
-
-  /* ===== Tabla moderna ===== */
-  .table-modern{
-    --row-hover: #f6f7fb;
-    --thead:#0f172a; --thead-bg:#f3f4f6;
-    width:100%; border-collapse: separate; border-spacing:0; overflow:hidden;
-    border:1px solid var(--hairline); border-radius:12px;
-  }
-  .table-modern thead th{
-    background:var(--thead-bg); color:var(--thead);
-    font-weight:700; text-transform:uppercase; letter-spacing:.02em; font-size:.78rem;
-    border-bottom:1px solid var(--hairline);
-  }
-  .table-modern th, .table-modern td{ padding:.6rem .75rem; vertical-align:middle; }
-  .table-modern tbody tr{ transition:background .15s ease; }
-  .table-modern tbody tr:hover{ background:var(--row-hover); }
-  .table-modern tfoot td, .table-modern tfoot th{
-    background:#fafafa; border-top:2px solid var(--hairline); font-weight:700;
-    position: sticky; bottom: 0; z-index: 1;
+  .review-meta {
+    font-size: .9rem;
+    color: var(--muted);
   }
 
-  /* ===== Inputs compactos ===== */
-  .form-control, .form-select{ border-radius:10px; }
-  .form-text{ color: var(--muted) }
-
-  /* ===== Summary box ===== */
-  .summary-box{
-    background:linear-gradient(180deg,#f8fafc, #f1f5f9);
-    border:1px dashed #cbd5e1; border-radius:12px; padding:1rem;
+  .review-items ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
   }
 
-  /* ===== Botones ===== */
-  .btn-pill{ border-radius:999px; }
-  .btn-primary{ background:var(--indigo); border-color:var(--indigo); }
-  .btn-outline-secondary{ border-radius:999px; }
-  .btn-success{ background:var(--success); border-color:var(--success); }
+  .review-items li {
+    padding: .4rem .6rem;
+    border-radius: .6rem;
+    background: #f9fafb;
+    margin-bottom: .25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    align-items: center;
+  }
 
-  /* ===== Adornos ===== */
-  .section-title{ display:flex; align-items:center; gap:.6rem; font-weight:800; color:var(--ink); }
-  .section-title .bar{ width:8px; height:8px; border-radius:2px; background:var(--teal); box-shadow: 12px 0 0 var(--amber), 24px 0 0 var(--indigo); }
-</style>
+  .review-items li::before {
+    content: "•";
+    color: var(--indigo);
+    font-weight: 700;
+    margin-right: .25rem;
+  }
 
-<div class="page-hero">
-  <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
-    <div>
-      <h2>🧾 Nuevo Caso Selva</h2>
-      <small>Gestioná compras ✈️ y remesas 💸 con cotización y seguimiento.</small>
-    </div>
-    <div class="d-flex gap-2">
-      <span class="chip indigo">Workflow</span>
-      <span class="chip teal">Cotizador</span>
-      <span class="chip amber">Notificaciones</span>
-    </div>
-  </div>
-</div>
+  </style>
 
-<div class="card alt">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div class="section-title mb-0">
-      <span class="bar"></span><span>🚀 Crear Caso</span>
-    </div>
-    <a href="/cases/" class="btn btn-sm btn-outline-secondary btn-pill">↩️ Volver</a>
-  </div>
-
-  <div class="card-body">
-
-    <!-- Stepper -->
-    <div class="stepper">
-      <div class="step active" data-step="1"><span class="dot">1️⃣</span> <span>Tipo</span></div>
-      <div class="step" data-step="2"><span class="dot">2️⃣</span> <span>Contacto</span></div>
-      <div class="step" data-step="3"><span class="dot">3️⃣</span> <span>Detalles</span></div>
-      <div class="step" data-step="4"><span class="dot">4️⃣</span> <span>Revisar</span></div>
-    </div>
-
-    <!-- PASO 1: Tipo -->
-    <div class="step-pane" id="step-1">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">🧭 Tipo de caso</label>
-          <select id="in-case-type" class="form-select">
-            <option value="GOODS" selected>🛍️ GOODS (Compra/envío)</option>
-            <option value="REMIT">💸 REMIT (Remesas)</option>
-          </select>
-          <div class="mt-2 d-flex gap-2">
-            <span class="chip success">En tiempo real</span>
-            <span class="chip">Multi-escenario</span>
+  <div class="card alt">
+    <div class="card-header">
+      <div class="case-header">
+        <div class="case-header-main">
+          <div class="case-title">Crear nuevo caso Selva</div>
+          <div class="case-subtitle">
+            Completá los pasos para registrar una compra o una remesa. Podés revisar todo antes de crear el caso.
           </div>
         </div>
-
-        <div class="col-md-4">
-          <label class="form-label">📣 Notificar a</label>
-          <select id="in-notify" class="form-select">
-            <option value="SENDER">Remitente</option>
-            <option value="RECEIVER">Receptor</option>
-            <option value="BOTH" selected>Ambos</option>
-          </select>
-          <div class="form-text">Quién recibe los estados por WhatsApp.</div>
+        <div class="case-tags">
+          <span class="chip indigo">Flujo guiado</span>
+          <span class="chip teal">Cotización</span>
+          <span class="chip amber">Notificaciones</span>
+          <a href="/cases/" class="btn btn-sm btn-outline-secondary btn-pill">Volver a la lista</a>
         </div>
+      </div>
+    </div>
 
-        <div class="col-md-4">
-          <label class="form-label">💼 Modo de fee</label>
-          <select id="in-fee-mode" class="form-select">
-            <option value="PCT" selected>Con fee % (clientes)</option>
-            <option value="FIX">Con fee fijo (clientes)</option>
-            <option value="NONE">Sin fee (amigos)</option>
-          </select>
-          <div class="form-text">Se aplica al cálculo de precio final.</div>
+    <div class="card-body">
+
+      <!-- Stepper -->
+      <div class="stepper">
+        <div class="step active" data-step="1">
+          <span class="dot">1</span>
+          <span>Tipo</span>
         </div>
+        <div class="step" data-step="2">
+          <span class="dot">2</span>
+          <span>Contacto</span>
+        </div>
+        <div class="step" data-step="3">
+          <span class="dot">3</span>
+          <span>Detalles</span>
+        </div>
+        <div class="step" data-step="4">
+          <span class="dot">4</span>
+          <span>Revisar</span>
+        </div>
+      </div>
 
-        <!-- Toggle de envío (solo GOODS) -->
-        <div class="col-md-4" id="ship-col">
-          <label class="form-label">🚚 Envío</label>
-          <div class="d-flex align-items-center gap-3">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="in-ship-enable">
-              <label class="form-check-label" for="in-ship-enable">Incluir envío</label>
+      <!-- PASO 1: Tipo -->
+      <div class="step-pane step-pane-enter" id="step-1">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Tipo de caso</label>
+            <select id="in-case-type" class="form-select">
+              <option value="GOODS" selected>GOODS (Compra/envío)</option>
+              <option value="REMIT">REMIT (Remesas)</option>
+            </select>
+            <div class="mt-2 d-flex gap-2 flex-wrap">
+              <span class="chip success">En tiempo real</span>
+              <span class="chip">Multi-escenario</span>
             </div>
-            <span id="ship-badge" class="chip d-none">🚚 Envío: <b id="ship-amount">USD 0.00</b></span>
           </div>
-          <div class="form-text">Si está activado, se usa el costo desde Configuración.</div>
-        </div>
 
-        <div class="col-12">
-          <label class="form-label">🗒️ Notas (opcional)</label>
-          <input id="in-notes" class="form-control" placeholder="Ej: prioridad alta">
-        </div>
-      </div>
-    </div>
-
-    <!-- PASO 2: Contacto -->
-    <div class="step-pane d-none" id="step-2">
-      <!-- GOODS -->
-      <div id="panel-goods-contact" class="mb-3 d-none">
-        <div class="section-title">
-          <span class="bar"></span><span>🙋 Cliente &amp; Destino (GOODS)</span>
-        </div>
-        <div class="row g-3 mt-1">
-          <!-- País primero -->
           <div class="col-md-4">
-            <label class="form-label">País destino</label>
-            <select id="goods-dst-country" class="form-select">
-              <option value="PY" selected>🇵🇾 Paraguay</option>
-              <option value="US">🇺🇸 USA</option>
+            <label class="form-label">Notificar a</label>
+            <select id="in-notify" class="form-select">
+              <option value="SENDER">Remitente</option>
+              <option value="RECEIVER">Receptor</option>
+              <option value="BOTH" selected>Ambos</option>
             </select>
-            <div class="form-text">Define el código del teléfono y el destino del envío.</div>
+            <div class="form-text">Define quién recibe los estados por WhatsApp.</div>
           </div>
 
-          <!-- Teléfono a la izquierda -->
           <div class="col-md-4">
-            <label class="form-label">Teléfono (notificaciones)</label>
-            <input id="goods-customer-phone"
-                   class="form-control"
-                   placeholder="+595 9xx xxx xxx">
-            <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
-          </div>
-
-          <!-- Nombre a la derecha (se autocompleta si el teléfono existe) -->
-          <div class="col-md-4">
-            <label class="form-label">Nombre del cliente</label>
-            <input id="goods-customer-name"
-                   class="form-control"
-                   placeholder="Nombre y apellido">
-            <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- REMIT -->
-      <div id="panel-remit-contact" class="">
-        <div class="section-title">
-          <span class="bar"></span><span>🔁 Remitente &amp; Receptor (REMIT)</span>
-        </div>
-        <div class="row g-3 mt-1">
-
-          <!-- Remitente -->
-          <div class="col-md-3">
-            <label class="form-label">Remitente - País</label>
-            <select id="remit-sender-country" class="form-select">
-              <option value="US" selected>🇺🇸 USA</option>
-              <option value="PY">🇵🇾 Paraguay</option>
+            <label class="form-label">Modo de fee</label>
+            <select id="in-fee-mode" class="form-select">
+              <option value="PCT" selected>Con fee % (clientes)</option>
+              <option value="FIX">Con fee fijo (clientes)</option>
+              <option value="NONE">Sin fee (amigos)</option>
             </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Remitente - Teléfono</label>
-            <input id="remit-sender-phone"
-                   class="form-control"
-                   placeholder="+1 305 ...">
-            <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Remitente - Nombre</label>
-            <input id="remit-sender-name"
-                   class="form-control"
-                   placeholder="Nombre y apellido">
-            <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
+            <div class="form-text">Se aplica al cálculo del precio final.</div>
           </div>
 
-          <!-- Receptor -->
-          <div class="col-md-3">
-            <label class="form-label">Receptor - País</label>
-            <select id="remit-receiver-country" class="form-select">
-              <option value="PY" selected>🇵🇾 Paraguay</option>
-              <option value="US">🇺🇸 USA</option>
-            </select>
-            <div class="form-text">Por defecto, el opuesto al remitente.</div>
+          <!-- Toggle de envío (solo GOODS) -->
+          <div class="col-md-4" id="ship-col">
+            <label class="form-label">Envío</label>
+            <div class="d-flex align-items-center gap-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="in-ship-enable">
+                <label class="form-check-label" for="in-ship-enable">Incluir envío</label>
+              </div>
+              <span id="ship-badge" class="chip d-none">
+                Envío: <b id="ship-amount">USD 0.00</b>
+              </span>
+            </div>
+            <div class="form-text">Si está activado, se usa el costo definido en Configuración.</div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Receptor - Teléfono</label>
-            <input id="remit-receiver-phone"
-                   class="form-control"
-                   placeholder="+595 9..">
-            <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Receptor - Nombre</label>
-            <input id="remit-receiver-name"
-                   class="form-control"
-                   placeholder="Nombre y apellido">
-            <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
+
+          <div class="col-12">
+            <label class="form-label">Notas (opcional)</label>
+            <input id="in-notes" class="form-control" placeholder="Ej: prioridad alta, coordinar foto al recibir">
           </div>
         </div>
       </div>
+
+      <!-- PASO 2: Contacto -->
+      <div class="step-pane d-none" id="step-2">
+        <!-- GOODS -->
+        <div id="panel-goods-contact" class="mb-3 d-none">
+          <div class="section-title">
+            <span class="bar"></span><span>Datos del cliente y destino (GOODS)</span>
+          </div>
+          <div class="row g-3 mt-1">
+            <!-- País primero -->
+            <div class="col-md-4">
+              <label class="form-label">País destino</label>
+              <select id="goods-dst-country" class="form-select">
+                <option value="PY" selected>Paraguay 🇵🇾</option>
+                <option value="US">USA 🇺🇸</option>
+              </select>
+              <div class="form-text">Ajusta el prefijo de teléfono y el destino del envío.</div>
+            </div>
+
+            <!-- Teléfono a la izquierda -->
+            <div class="col-md-4">
+              <label class="form-label">Teléfono (notificaciones)</label>
+              <input id="goods-customer-phone"
+                    class="form-control"
+                    placeholder="+595 9xx xxx xxx">
+              <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
+            </div>
+
+            <!-- Nombre a la derecha (se autocompleta si el teléfono existe) -->
+            <div class="col-md-4">
+              <label class="form-label">Nombre del cliente</label>
+              <input id="goods-customer-name"
+                    class="form-control"
+                    placeholder="Nombre y apellido">
+              <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REMIT -->
+        <div id="panel-remit-contact" class="">
+          <div class="section-title">
+            <span class="bar"></span><span>Remitente y receptor (REMIT)</span>
+          </div>
+          <div class="row g-3 mt-1">
+
+            <!-- Remitente -->
+            <div class="col-md-3">
+              <label class="form-label">Remitente - País</label>
+              <select id="remit-sender-country" class="form-select">
+                <option value="US" selected>USA 🇺🇸</option>
+                <option value="PY">Paraguay 🇵🇾</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Remitente - Teléfono</label>
+              <input id="remit-sender-phone"
+                    class="form-control"
+                    placeholder="+1 305 ...">
+              <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Remitente - Nombre</label>
+              <input id="remit-sender-name"
+                    class="form-control"
+                    placeholder="Nombre y apellido">
+              <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
+            </div>
+
+            <!-- Receptor -->
+            <div class="col-md-3">
+              <label class="form-label">Receptor - País</label>
+              <select id="remit-receiver-country" class="form-select">
+                <option value="PY" selected>Paraguay 🇵🇾</option>
+                <option value="US">USA 🇺🇸</option>
+              </select>
+              <div class="form-text">Por defecto, el opuesto al país del remitente.</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Receptor - Teléfono</label>
+              <input id="remit-receiver-phone"
+                    class="form-control"
+                    placeholder="+595 9..">
+              <div class="invalid-feedback">Número inválido. Usá +595 9xx xxx xxx o +1 xxx xxx xxxx.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Receptor - Nombre</label>
+              <input id="remit-receiver-name"
+                    class="form-control"
+                    placeholder="Nombre y apellido">
+              <div class="form-text">Se completa automáticamente si el teléfono ya existe.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 3: Detalles -->
+      <div class="step-pane d-none" id="step-3">
+        <!-- GOODS -->
+        <div id="panel-goods-details">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="section-title mb-0">
+              <span class="bar"></span><span>Productos (GOODS)</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-add-item">Agregar ítem</button>
+              <button class="btn btn-sm btn-outline-secondary btn-pill" id="btn-recalc">Recalcular</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table-modern table table-sm align-middle" id="tbl-items">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th style="width:110px;">Cant.</th>
+                  <th style="width:140px;">Costo USD</th>
+                  <th style="width:140px;">Precio USD</th>
+                  <th style="width:40px;"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <th class="text-end">Totales:</th>
+                  <th id="sum-qty">0</th>
+                  <th id="sum-cost">USD 0.00</th>
+                  <th id="sum-price">USD 0.00</th>
+                  <th></th>
+                </tr>
+                <tr>
+                  <td colspan="5" class="text-end">
+                    <div class="d-inline-block text-start">
+                      <div><span class="chip">Total costo: <b id="total-cost">USD 0.00</b></span></div>
+                      <div><span class="chip teal">Total precio: <b id="total-price">USD 0.00</b></span></div>
+                      <div><span class="chip success">Diferencia: <b id="total-diff">USD 0.00</b></span></div>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div id="quote-hint" class="form-text">El “Precio USD” se calcula automáticamente según el modo de fee.</div>
+        </div>
+
+        <!-- REMIT -->
+        <div id="panel-remit-details" class="d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="section-title mb-0">
+              <span class="bar"></span><span>Remesa (REMIT)</span>
+            </div>
+            <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-recalc-remit">Calcular</button>
+          </div>
+
+          <div class="table-responsive mt-1" id="remit-quote-box">
+            <table class="table-modern table table-sm align-middle" id="tbl-remit">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th style="width:160px;">Monto a enviar (USD)</th>
+                  <th style="width:140px;">Cotización</th>
+                  <th style="width:170px;">Monto a cobrar (USD)</th>
+                  <th style="width:170px;">Monto a cobrar (Gs)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="remit-desc">
+                    Envío de divisa:
+                    <span id="remit-desc-names">Remitente → Receptor</span>
+                  </td>
+                  <td>
+                    <input id="remit-amount"
+                          type="number"
+                          min="1"
+                          step="0.01"
+                          class="form-control form-control-sm"
+                          placeholder="100">
+                  </td>
+                  <td id="remit-col-fx">-</td>
+                  <td id="remit-col-charge-usd">USD 0.00</td>
+                  <td id="remit-col-charge-py">Gs. 0</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th class="text-end">Totales:</th>
+                  <th id="remit-sum-amt">USD 0.00</th>
+                  <th></th>
+                  <th id="remit-sum-charge-usd">USD 0.00</th>
+                  <th id="remit-sum-charge-py">Gs. 0</th>
+                </tr>
+                <tr>
+                  <td colspan="5" class="text-end">
+                    <div class="d-inline-block text-start">
+                      <div><span class="chip">Total costo: <b id="remit-total-cost">USD 0.00</b></span></div>
+                      <div><span class="chip teal">Total precio: <b id="remit-total-price">USD 0.00</b></span></div>
+                      <div><span class="chip success">Diferencia: <b id="remit-total-diff">USD 0.00</b></span></div>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div id="remit-quote-hint" class="form-text mt-2">
+            Ingresá el monto en USD en la tabla. Los montos son estimados según el fee del paso 1 y la tasa del día.
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 4: Resumen -->
+      <div class="step-pane d-none" id="step-4">
+        <div class="section-title mb-2">
+          <span class="bar"></span><span>Resumen antes de crear</span>
+        </div>
+        <div class="summary-box">
+          <div id="review-human"></div>
+        </div>
+        <div class="mt-3 text-end">
+          <button id="btn-create" class="btn btn-success btn-pill">Crear caso</button>
+        </div>
+      </div>
+
+      <!-- Navegación -->
+      <div class="d-flex justify-content-between mt-3">
+        <button id="btn-prev" class="btn btn-outline-secondary btn-pill" disabled>← Anterior</button>
+        <button id="btn-next" class="btn btn-primary btn-pill">Siguiente →</button>
+      </div>
+
     </div>
-
-    <!-- PASO 3: Detalles -->
-    <div class="step-pane d-none" id="step-3">
-      <!-- GOODS -->
-      <div id="panel-goods-details">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="section-title mb-0"><span class="bar"></span><span>📦 Producto(s) (GOODS)</span></div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-add-item">➕ Agregar ítem</button>
-            <button class="btn btn-sm btn-outline-secondary btn-pill" id="btn-recalc">🧮 Recalcular</button>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table-modern table table-sm align-middle" id="tbl-items">
-            <thead>
-              <tr>
-                <th>Descripción</th>
-                <th style="width:110px;">Cant.</th>
-                <th style="width:140px;">Costo USD</th>
-                <th style="width:140px;">Precio USD</th>
-                <th style="width:40px;"></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr>
-                <th class="text-end">Totales:</th>
-                <th id="sum-qty">0</th>
-                <th id="sum-cost">USD 0.00</th>
-                <th id="sum-price">USD 0.00</th>
-                <th></th>
-              </tr>
-              <tr>
-                <td colspan="5" class="text-end">
-                  <div class="d-inline-block text-start">
-                    <div><span class="chip">🧾 Total Costo: <b id="total-cost">USD 0.00</b></span></div>
-                    <div><span class="chip teal">💰 Total Precio: <b id="total-price">USD 0.00</b></span></div>
-                    <div><span class="chip success">📈 Dif: <b id="total-diff">USD 0.00</b></span></div>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <div id="quote-hint" class="form-text">El “Precio USD” se calcula automáticamente según el modo de fee.</div>
-      </div>
-
-      <!-- REMIT -->
-      <div id="panel-remit-details" class="d-none">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="section-title mb-0"><span class="bar"></span><span>💵 Remesa (REMIT)</span></div>
-          <button class="btn btn-sm btn-outline-primary btn-pill" id="btn-recalc-remit">🧮 Calcular</button>
-        </div>
-
-        <div class="table-responsive mt-1" id="remit-quote-box">
-          <table class="table-modern table table-sm align-middle" id="tbl-remit">
-            <thead>
-              <tr>
-                <th>Descripción</th>
-                <th style="width:160px;">Monto a Enviar (USD)</th>
-                <th style="width:140px;">Cotización</th>
-                <th style="width:170px;">Monto a Cobrar (USD)</th>
-                <th style="width:170px;">Monto a Cobrar (Gs)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td id="remit-desc">
-                  Envío de divisa:
-                  <span id="remit-desc-names">Remitente → Receptor</span>
-                </td>
-                <td>
-                  <input id="remit-amount"
-                         type="number"
-                         min="1"
-                         step="0.01"
-                         class="form-control form-control-sm"
-                         placeholder="100">
-                </td>
-                <td id="remit-col-fx">-</td>
-                <td id="remit-col-charge-usd">USD 0.00</td>
-                <td id="remit-col-charge-py">Gs. 0</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <th class="text-end">Totales:</th>
-                <th id="remit-sum-amt">USD 0.00</th>
-                <th></th>
-                <th id="remit-sum-charge-usd">USD 0.00</th>
-                <th id="remit-sum-charge-py">Gs. 0</th>
-              </tr>
-              <tr>
-                <td colspan="5" class="text-end">
-                  <div class="d-inline-block text-start">
-                    <div><span class="chip">🧾 Total Costo: <b id="remit-total-cost">USD 0.00</b></span></div>
-                    <div><span class="chip teal">💰 Total Precio: <b id="remit-total-price">USD 0.00</b></span></div>
-                    <div><span class="chip success">📈 Dif: <b id="remit-total-diff">USD 0.00</b></span></div>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <div id="remit-quote-hint" class="form-text mt-2">
-          Ingresá el monto en USD en la tabla. Los montos son estimados según el fee del paso 1 y la tasa del día.
-        </div>
-      </div>
-    </div>
-
-    <!-- PASO 4: Resumen -->
-    <div class="step-pane d-none" id="step-4">
-      <div class="section-title mb-2"><span class="bar"></span><span>🧩 Resumen</span></div>
-      <div class="summary-box">
-        <div id="review-human"></div>
-      </div>
-      <div class="mt-3 text-end">
-        <button id="btn-create" class="btn btn-success btn-pill">✅ Crear Caso</button>
-      </div>
-    </div>
-
-    <!-- Navegación -->
-    <div class="d-flex justify-content-between mt-3">
-      <button id="btn-prev" class="btn btn-outline-secondary btn-pill" disabled>← Anterior</button>
-      <button id="btn-next" class="btn btn-primary btn-pill">Siguiente →</button>
-    </div>
-
   </div>
-</div>
 
-<script>
-/* ===== Estado ===== */
-let cur = 1;
-const MAX = 4;
+  <script>
+  /* ===== Estado ===== */
+  let cur = 1;
+  const MAX = 4;
 
-const state = {
-  case_type: 'GOODS',
-  notify: 'BOTH',
-  fee_mode: 'PCT',
-  notes: '',
-  customer: { name:'', phone:'' },
-  destination: { country:'PY' },
-  items: [],
-  
-  customer_id: null,
-  sender:  { name:'', phone:'', country:'US' },
-  receiver:{ name:'', phone:'', country:'PY' },
-  amount_usd: null,
-  purpose: '',
+  const state = {
+    case_type: 'GOODS',
+    notify: 'BOTH',
+    fee_mode: 'PCT',
+    notes: '',
+    customer: { name:'', phone:'' },
+    destination: { country:'PY' },
+    items: [],
+    
+    customer_id: null,
+    sender:  { name:'', phone:'', country:'US' },
+    receiver:{ name:'', phone:'', country:'PY' },
+    amount_usd: null,
+    purpose: '',
 
-  fx_rate: null,
-  fx_date: null,
-  fx_pair: null,
-  remit_total_charge: null,
-  remit_fee_amount: null,
-  remit_currency_charge: 'USD',
-  remit_fee_currency: 'USD',
-  remit_breakdown_py: null,
+    fx_rate: null,
+    fx_date: null,
+    fx_pair: null,
+    remit_total_charge: null,
+    remit_fee_amount: null,
+    remit_currency_charge: 'USD',
+    remit_fee_currency: 'USD',
+    remit_breakdown_py: null,
 
-  fx_rate_goods: null,
-  fx_goods_date: null,
-  fx_goods_pair: 'USD/PYG',
+    fx_rate_goods: null,
+    fx_goods_date: null,
+    fx_goods_pair: 'USD/PYG',
 
-  shipping: { enabled: false, amount: 0, currency: 'USD' }
-};
+    shipping: { enabled: false, amount: 0, currency: 'USD' }
+  };
 
-/* ===== Stepper/UI ===== */
-function updateStepper(){
-  document.querySelectorAll('.step').forEach(s=>{
-    const n = Number(s.dataset.step);
-    s.classList.toggle('active', n===cur);
-    s.classList.toggle('done', n<cur);
-  });
-  document.querySelectorAll('.step-pane').forEach(p=>p.classList.add('d-none'));
-  document.getElementById('step-'+cur).classList.remove('d-none');
-  document.getElementById('btn-prev').disabled = (cur===1);
-  document.getElementById('btn-next').classList.toggle('d-none', cur===MAX);
-}
+  /* ===== Stepper/UI ===== */
+  function updateStepper(){
+    document.querySelectorAll('.step').forEach(s=>{
+      const n = Number(s.dataset.step);
+      s.classList.toggle('active', n===cur);
+      s.classList.toggle('done', n<cur);
+    });
 
-const SHIPPING_KEY = 'shipping_usd';
-
-function formatGs(amount){
-  const v = Math.round(Number(amount || 0));
-  return 'Gs. ' + v.toLocaleString('es-PY');
-}
-
-/* ===== Cargar shipping por default ===== */
-async function loadShipping(){
-  try {
-    const res = await fetch(`/config/api/settings/${encodeURIComponent(SHIPPING_KEY)}`);
-    if (!res.ok) throw new Error(await res.text());
-    const json = await res.json();
-
-    const val = (json && (json.value || json?.item?.value)) || {};
-    const amount = Number(val.amount || 0);
-    const currency = String(val.currency || 'USD');
-
-    state.shipping.amount = amount;
-    state.shipping.currency = currency;
-
-    const $txt = document.getElementById('ship-amount');
-    if ($txt) $txt.innerText = `${currency} ${amount.toFixed(2)}`;
-
-    if (state.case_type === 'GOODS' && state.items.length && state.shipping.enabled) {
-      await recalcPrices();
+    // panes
+    document.querySelectorAll('.step-pane').forEach(p=>{
+      p.classList.add('d-none');
+      p.classList.remove('step-pane-enter');
+    });
+    const activePane = document.getElementById('step-'+cur);
+    if (activePane){
+      activePane.classList.remove('d-none');
+      // reflow para reiniciar animación
+      void activePane.offsetWidth;
+      activePane.classList.add('step-pane-enter');
     }
-    if (cur === 4) renderHumanReview();
-  } catch (e) {
-    console.warn('No se pudo cargar shipping_usd:', e);
-    state.shipping.amount = 0;
-    state.shipping.currency = 'USD';
-    const $txt = document.getElementById('ship-amount');
-    if ($txt) $txt.innerText = `USD 0.00`;
+
+    document.getElementById('btn-prev').disabled = (cur===1);
+    document.getElementById('btn-next').classList.toggle('d-none', cur===MAX);
   }
-}
 
-// ===== Helpers para teléfonos =====
-const CUSTOMERS_LOOKUP_URL = "/cases/customer-lookup";
+  const SHIPPING_KEY = 'shipping_usd';
 
-function onlyDigits(str) {
-  return (str || "").replace(/\D/g, "");
-}
+  function formatGs(amount){
+    const v = Math.round(Number(amount || 0));
+    return 'Gs. ' + v.toLocaleString('es-PY');
+  }
 
-// Devuelve el teléfono canónico para lookup: +595981514767 / +13055551234
-function buildCanonicalPhone(country, rawValue) {
-  let digits = onlyDigits(rawValue || "");
+  /* ===== Cargar shipping por default ===== */
+  async function loadShipping(){
+    try {
+      const res = await fetch(`/config/api/settings/${encodeURIComponent(SHIPPING_KEY)}`);
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
 
-  if (country === "PY") {
-    // Nos quedamos con la parte local (sin 595)
+      const val = (json && (json.value || json?.item?.value)) || {};
+      const amount = Number(val.amount || 0);
+      const currency = String(val.currency || 'USD');
+
+      state.shipping.amount = amount;
+      state.shipping.currency = currency;
+
+      const $txt = document.getElementById('ship-amount');
+      if ($txt) $txt.innerText = `${currency} ${amount.toFixed(2)}`;
+
+      if (state.case_type === 'GOODS' && state.items.length && state.shipping.enabled) {
+        await recalcPrices();
+      }
+      if (cur === 4) renderHumanReview();
+    } catch (e) {
+      console.warn('No se pudo cargar shipping_usd:', e);
+      state.shipping.amount = 0;
+      state.shipping.currency = 'USD';
+      const $txt = document.getElementById('ship-amount');
+      if ($txt) $txt.innerText = `USD 0.00`;
+    }
+  }
+
+  // ===== Helpers para teléfonos =====
+  const CUSTOMERS_LOOKUP_URL = "/cases/customer-lookup";
+
+  function onlyDigits(str) {
+    return (str || "").replace(/\D/g, "");
+  }
+
+  // Devuelve el teléfono canónico para lookup: +595981514767 / +13055551234
+  function buildCanonicalPhone(country, rawValue) {
+    let digits = onlyDigits(rawValue || "");
+
+    if (country === "PY") {
+      // Nos quedamos con la parte local (sin 595)
+      if (digits.startsWith("595")) {
+        digits = digits.slice(3);
+      }
+      // Máximo 9 dígitos locales (9xx xxx xxx)
+      digits = digits.slice(0, 9);
+      if (!digits) return null;
+      digits = "595" + digits; // 595 + local
+    } else if (country === "US") {
+      // Quitamos 1 si viene
+      if (digits.startsWith("1")) {
+        digits = digits.slice(1);
+      }
+      // Máximo 10 dígitos locales (XXX XXX XXXX)
+      digits = digits.slice(0, 10);
+      if (!digits) return null;
+      digits = "1" + digits; // 1 + local
+    } else {
+      // Por ahora solo soportamos PY / US
+      return null;
+    }
+
+    return "+" + digits;
+  }
+
+  // Formatea SOLO la parte local, sin el código de país
+  function formatLocalPY(localDigits) {
+    let d = (localDigits || "").slice(0, 9); // 9xx xxx xxx
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return d.slice(0, 3) + " " + d.slice(3);
+    return d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
+  }
+
+  function formatLocalUS(localDigits) {
+    let d = (localDigits || "").slice(0, 10); // XXX XXX XXXX
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return d.slice(0, 3) + " " + d.slice(3);
+    return d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
+  }
+
+  // Valida usando el formato canónico
+  function isValidPhone(value) {
+    const digits = onlyDigits(value || "");
     if (digits.startsWith("595")) {
-      digits = digits.slice(3);
+      // 595 + 9 dígitos locales
+      return digits.length === 12;
     }
-    // Máximo 9 dígitos locales (9xx xxx xxx)
-    digits = digits.slice(0, 9);
-    if (!digits) return null;
-    digits = "595" + digits; // 595 + local
-  } else if (country === "US") {
-    // Quitamos 1 si viene
     if (digits.startsWith("1")) {
-      digits = digits.slice(1);
+      // 1 + 10 dígitos locales
+      return digits.length === 11;
     }
-    // Máximo 10 dígitos locales (XXX XXX XXXX)
-    digits = digits.slice(0, 10);
-    if (!digits) return null;
-    digits = "1" + digits; // 1 + local
-  } else {
-    // Por ahora solo soportamos PY / US
-    return null;
+    return false;
   }
 
-  return "+" + digits;
-}
-
-// Formatea SOLO la parte local, sin el código de país
-function formatLocalPY(localDigits) {
-  let d = (localDigits || "").slice(0, 9); // 9xx xxx xxx
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return d.slice(0, 3) + " " + d.slice(3);
-  return d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
-}
-
-function formatLocalUS(localDigits) {
-  let d = (localDigits || "").slice(0, 10); // XXX XXX XXXX
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return d.slice(0, 3) + " " + d.slice(3);
-  return d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
-}
-
-// Valida usando el formato canónico
-function isValidPhone(value) {
-  const digits = onlyDigits(value || "");
-  if (digits.startsWith("595")) {
-    // 595 + 9 dígitos locales
-    return digits.length === 12;
+  async function lookupCustomerByPhone(phoneCanonical) {
+    if (!phoneCanonical) return null;
+    const url = `${CUSTOMERS_LOOKUP_URL}?phone=${encodeURIComponent(phoneCanonical)}`;
+    try {
+      const resp = await fetch(url, { headers: { "Accept": "application/json" } });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      if (!data.ok) return null;
+      return data.customer || null;
+    } catch (e) {
+      console.error("Error lookup customer", e);
+      return null;
+    }
   }
-  if (digits.startsWith("1")) {
-    // 1 + 10 dígitos locales
-    return digits.length === 11;
-  }
-  return false;
-}
-
-async function lookupCustomerByPhone(phoneCanonical) {
-  if (!phoneCanonical) return null;
-  const url = `${CUSTOMERS_LOOKUP_URL}?phone=${encodeURIComponent(phoneCanonical)}`;
-  try {
-    const resp = await fetch(url, { headers: { "Accept": "application/json" } });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    if (!data.ok) return null;
-    return data.customer || null;
-  } catch (e) {
-    console.error("Error lookup customer", e);
-    return null;
-  }
-}
 
 // countrySelId: select con PY/US
 // phoneInputId: input de teléfono
@@ -605,46 +810,65 @@ function setupCountryPhonePair(countrySelId, phoneInputId, nameInputId) {
     }
   }
 
+  // 🔧 Versión corregida: no repite 595 / 1
   function formatAndSetValue() {
     const country = $country.value;
-    let digits = onlyDigits($phone.value || "");
+    const raw = $phone.value || "";
+    let digits = onlyDigits(raw);
+
+    // Si no hay dígitos, permitimos que quede vacío
+    if (!digits) {
+      $phone.value = "";
+      return;
+    }
 
     if (country === "PY") {
-      // Quitamos 595 si viene, y nos quedamos con locales
+      // Si ya viene con 595 (porque lo agregamos antes), lo quitamos
       if (digits.startsWith("595")) {
         digits = digits.slice(3);
       }
-      digits = digits.slice(0, 9); // 9 dígitos locales
+      // Máximo 9 dígitos locales 9xx xxx xxx
+      digits = digits.slice(0, 9);
       const localFormatted = formatLocalPY(digits);
-      $phone.value = "+595" + (localFormatted ? " " + localFormatted : " ");
+      $phone.value = "+595" + (localFormatted ? " " + localFormatted : "");
     } else {
-      // US
+      // USA
       if (digits.startsWith("1")) {
         digits = digits.slice(1);
       }
-      digits = digits.slice(0, 10); // 10 dígitos locales
+      // Máximo 10 dígitos locales XXX XXX XXXX
+      digits = digits.slice(0, 10);
       const localFormatted = formatLocalUS(digits);
-      $phone.value = "+1" + (localFormatted ? " " + localFormatted : " ");
+      $phone.value = "+1" + (localFormatted ? " " + localFormatted : "");
     }
   }
 
-  // Al cambiar el país, reformateamos y fijamos prefijo
+
+
+  // Al cambiar el país:
+  // - cambiamos placeholder
+  // - limpiamos el campo (evitamos mezclar +595 con +1)
+  // - limpiamos errores
   $country.addEventListener("change", () => {
     applyPlaceholder($country.value);
-    formatAndSetValue();
+    $phone.value = "";
+
+    const formGroup = $phone.closest(".col-md-3, .col-md-4, .col-md-6, .col-md-12") || $phone.parentElement;
+    const invalidFeedback = formGroup && formGroup.querySelector(".invalid-feedback");
+    $phone.classList.remove("is-invalid");
+    if (invalidFeedback) invalidFeedback.style.display = "none";
   });
 
-  // Inicial
+  // Inicial: solo placeholder, sin tocar el valor
   applyPlaceholder($country.value);
-  formatAndSetValue();
 
-  // Mientras escribe, sólo dejamos dígitos y reformateamos
+  // Mientras escribe, sanitizamos y formateamos SIN rotar el número
   $phone.addEventListener("input", () => {
     formatAndSetValue();
   });
 
   // Al salir del input: validar + lookup + autocompletar nombre
- $phone.addEventListener("blur", async function () {
+  $phone.addEventListener("blur", async function () {
     const raw = (this.value || "").trim();
     const country = $country.value;
     const formGroup = this.closest(".col-md-3, .col-md-4, .col-md-6, .col-md-12") || this.parentElement;
@@ -669,12 +893,10 @@ function setupCountryPhonePair(countrySelId, phoneInputId, nameInputId) {
       if ($name) {
         $name.value = customer.name;
       }
-      // 👇 si es el teléfono principal de GOODS, guardamos el id
       if (phoneInputId === "goods-customer-phone") {
         state.customer_id = customer.id || null;
       }
     } else {
-      // no hay customer, dejamos que el usuario escriba el nombre
       if (phoneInputId === "goods-customer-phone") {
         state.customer_id = null;
       }
@@ -682,459 +904,460 @@ function setupCountryPhonePair(countrySelId, phoneInputId, nameInputId) {
   });
 }
 
-// ========= HOOK DE INICIALIZACIÓN =========
-document.addEventListener("DOMContentLoaded", function () {
-  // GOODS
-  setupCountryPhonePair("goods-dst-country", "goods-customer-phone", "goods-customer-name");
 
-  // REMIT – remitente y receptor
-  setupCountryPhonePair("remit-sender-country", "remit-sender-phone", "remit-sender-name");
-  setupCountryPhonePair("remit-receiver-country", "remit-receiver-phone", "remit-receiver-name");
+  // ========= HOOK DE INICIALIZACIÓN =========
+  document.addEventListener("DOMContentLoaded", function () {
+    // GOODS
+    setupCountryPhonePair("goods-dst-country", "goods-customer-phone", "goods-customer-name");
 
-  // Lógica de países opuestos para remitente/receptor
-  const senderCountry   = document.getElementById("remit-sender-country");
-  const receiverCountry = document.getElementById("remit-receiver-country");
+    // REMIT – remitente y receptor
+    setupCountryPhonePair("remit-sender-country", "remit-sender-phone", "remit-sender-name");
+    setupCountryPhonePair("remit-receiver-country", "remit-receiver-phone", "remit-receiver-name");
 
-  if (senderCountry && receiverCountry) {
-    senderCountry.addEventListener("change", function () {
-      // Si cambia el remitente, seteamos el opuesto por defecto
-      receiverCountry.value = (this.value === "US") ? "PY" : "US";
-      // Disparamos re-formateo en el input de receptor
-      const ev = new Event("input", { bubbles: true });
-      document.getElementById("remit-receiver-phone").dispatchEvent(ev);
-    });
-  }
-});
-/* ===== Cargar FX para GOODS (siempre USD/PYG) ===== */
-async function loadFxGoods(){
-  try {
-    // Se usa el listado existente /config/api/fx y se toma el primer ítem como "latest"
-    const res = await fetch('/config/api/fx');
-    if (!res.ok) throw new Error(await res.text());
-    const json = await res.json();
+    // Lógica de países opuestos para remitente/receptor
+    const senderCountry   = document.getElementById("remit-sender-country");
+    const receiverCountry = document.getElementById("remit-receiver-country");
 
-    const items = json.items || json.value || [];
-    const fxObj = Array.isArray(items) && items.length ? items[0] : (json.fx || json.item || json || {});
-
-    const rate = Number(fxObj.rate || 0) || null;
-    const date = fxObj.date || null;
-    const pair = fxObj.pair || 'USD/PYG';
-
-    state.fx_rate_goods = rate;
-    state.fx_goods_date = date;
-    state.fx_goods_pair = pair;
-
-    const $fx = document.getElementById('fx-goods');
-    if ($fx) {
-      $fx.innerText = rate ? `${pair} @ ${rate.toFixed(2)}` : 'Sin FX';
+    if (senderCountry && receiverCountry) {
+      senderCountry.addEventListener("change", function () {
+        // Si cambia el remitente, seteamos el opuesto por defecto
+        receiverCountry.value = (this.value === "US") ? "PY" : "US";
+        // Disparamos re-formateo en el input de receptor
+        const ev = new Event("input", { bubbles: true });
+        document.getElementById("remit-receiver-phone").dispatchEvent(ev);
+      });
     }
-
-    if (state.case_type === 'GOODS' && state.items.length) {
-      await recalcPrices();
-    }
-    if (cur === 4) renderHumanReview();
-
-  } catch (e) {
-    console.warn('No se pudo cargar FX GOODS:', e);
-    state.fx_rate_goods = null;
-    state.fx_goods_date = null;
-    state.fx_goods_pair = 'USD/PYG';
-
-    const $fx = document.getElementById('fx-goods');
-    if ($fx) {
-      $fx.innerText = 'Sin FX';
-    }
-  }
-}
-
-// Toggle envío en paso 1
-document.getElementById('in-ship-enable').addEventListener('change', async (ev)=>{
-  state.shipping.enabled = ev.target.checked;
-  document.getElementById('ship-badge').classList.toggle('d-none', !state.shipping.enabled);
-  if (state.case_type==='GOODS' && state.items.length){ await recalcPrices(); }
-  if (cur === 4) renderHumanReview();
-});
-
-/* ===== Sync desde UI al state ===== */
-async function syncFromUI(step){
-  if(step===1){
-    state.case_type = document.getElementById('in-case-type').value;
-    state.notify    = document.getElementById('in-notify').value;
-    state.fee_mode  = document.getElementById('in-fee-mode').value;
-    state.notes     = document.getElementById('in-notes').value.trim();
-
-    const goods = (state.case_type==='GOODS');
-    document.getElementById('panel-goods-contact').classList.toggle('d-none', !goods);
-    document.getElementById('panel-remit-contact').classList.toggle('d-none', goods);
-    document.getElementById('panel-goods-details').classList.toggle('d-none', !goods);
-    document.getElementById('panel-remit-details').classList.toggle('d-none', goods);
-
-    document.getElementById('ship-col').classList.toggle('d-none', !goods);
-    if (!goods){
-      state.shipping.enabled = false;
-      document.getElementById('in-ship-enable').checked = false;
-      document.getElementById('ship-badge').classList.add('d-none');
-    }
-  }
-
-  if(step===2){
-    if(state.case_type==='GOODS'){
-      state.customer.name  = document.getElementById('goods-customer-name').value.trim();
-      state.customer.phone = document.getElementById('goods-customer-phone').value.trim();
-      state.destination.country = document.getElementById('goods-dst-country').value;
-    } else {
-      state.sender.name    = document.getElementById('remit-sender-name').value.trim();
-      state.sender.phone   = document.getElementById('remit-sender-phone').value.trim();
-      state.receiver.name  = document.getElementById('remit-receiver-name').value.trim();
-      state.receiver.phone = document.getElementById('remit-receiver-phone').value.trim();
-      const sc = document.getElementById('remit-sender-country').value;
-      const rc = document.getElementById('remit-receiver-country').value;
-      state.sender.country   = sc;
-      state.receiver.country = rc;
-      updateRemitQuoteUI(null);
-    }
-  }
-
-  if(step===3){
-    if(state.case_type==='GOODS'){
-      syncItems();
-      await recalcPrices();
-    } else {
-      const amt = parseFloat(document.getElementById('remit-amount').value);
-      state.amount_usd = isNaN(amt) ? null : amt;
-      await recalcRemit();
-    }
-  }
-
-  if(step===4){
-    renderHumanReview();
-  }
-}
-
-function validate(step){
-  if(step===1) return true;
-
-  if(step===2){
-    if(state.case_type==='GOODS'){
-      if(!state.customer.name || !state.customer.phone){ toast('Completá nombre y teléfono'); return false; }
-      return true;
-    } else {
-      if(!state.sender.name || !state.sender.phone){ toast('Completá remitente'); return false; }
-      if(!state.receiver.name || !state.receiver.phone){ toast('Completá receptor'); return false; }
-      return true;
-    }
-  }
-
-  if(step===3){
-    if(state.case_type==='GOODS'){
-      if(state.items.length===0){ toast('Agregá al menos un ítem'); return false; }
-      return true;
-    } else {
-      if(!state.amount_usd || state.amount_usd<=0){ toast('Ingresá un monto válido'); return false; }
-      return true;
-    }
-  }
-
-  return true;
-}
-
-function inferPairFromCountries(senderCountry, receiverCountry){
-  if (senderCountry === 'US' && receiverCountry === 'PY') return 'USD/PYG';
-  if (senderCountry === 'PY' && receiverCountry === 'US') return 'PYG/USD';
-  return 'USD/PYG';
-}
-
-document.getElementById('btn-next').addEventListener('click', async ()=>{
-  await syncFromUI(cur);
-  if(!validate(cur)) return;
-  cur = Math.min(MAX, cur+1);
-  updateStepper();
-  if (cur === 4) renderHumanReview();
-});
-
-document.getElementById('btn-prev').addEventListener('click', ()=>{
-  cur = Math.max(1, cur-1);
-  updateStepper();
-});
-
-/* ===== Ítems (GOODS) ===== */
-const tbody = document.querySelector('#tbl-items tbody');
-
-document.getElementById('btn-add-item').addEventListener('click', ()=>{
-  const row = document.createElement('tr');
-  row.innerHTML = `
-    <td><input class="form-control form-control-sm in-desc" placeholder="Ej: iPhone 17 Pro Max"></td>
-    <td><input type="number" min="1" value="1" class="form-control form-control-sm in-qty"></td>
-    <td><input type="number" step="0.01" value="0" class="form-control form-control-sm in-cost" placeholder="USD"></td>
-    <td><input type="number" step="0.01" value="0" class="form-control form-control-sm in-price" placeholder="auto" disabled></td>
-    <td><button class="btn btn-sm btn-outline-danger btn-pill btn-del">✖</button></td>
-  `;
-  tbody.appendChild(row);
-
-  row.querySelector('.btn-del').onclick = ()=> { row.remove(); recalcTotals(); };
-
-  ['.in-desc','.in-qty','.in-cost'].forEach(sel=>{
-    row.querySelector(sel).addEventListener('input', async ()=>{
-      syncItems();
-      await recalcPrices();
-    });
   });
-});
+  /* ===== Cargar FX para GOODS (siempre USD/PYG) ===== */
+  async function loadFxGoods(){
+    try {
+      // Se usa el listado existente /config/api/fx y se toma el primer ítem como "latest"
+      const res = await fetch('/config/api/fx');
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
 
-function syncItems(){
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  state.items = rows.map(r=>({
-    description: r.querySelector('.in-desc').value.trim(),
-    qty: Number(r.querySelector('.in-qty').value || 1),
-    cost_usd: Number(r.querySelector('.in-cost').value || 0),
-    price_usd: Number(r.querySelector('.in-price').value || 0)
-  })).filter(x=>x.description);
-}
+      const items = json.items || json.value || [];
+      const fxObj = Array.isArray(items) && items.length ? items[0] : (json.fx || json.item || json || {});
 
-/* ===== Recalcular precios y totales (GOODS) ===== */
-document.getElementById('btn-recalc').addEventListener('click', ()=> recalcPrices());
+      const rate = Number(fxObj.rate || 0) || null;
+      const date = fxObj.date || null;
+      const pair = fxObj.pair || 'USD/PYG';
 
-async function recalcPrices(){
-  if(state.case_type !== 'GOODS'){ return; }
-  if(state.items.length===0){ recalcTotals(); return; }
-
-  const itemsTotal = state.items.reduce(
-    (acc, it)=> acc + (Number(it.cost_usd||0) * Number(it.qty||0)), 0
-  );
-
-  const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
-
-  if(state.fee_mode === 'NONE'){
-    const totalCosto  = itemsTotal;
-    const totalPrecio = totalCosto + shippingCost;
-    const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
-
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    rows.forEach((row, i)=>{
-      const costUnit = Number(row.querySelector('.in-cost').value || 0);
-      const priceUnit = costUnit * factor;
-      row.querySelector('.in-price').value = priceUnit.toFixed(2);
-      state.items[i].price_usd = priceUnit;
-    });
-
-    recalcTotals();
-
-    if (state.fx_rate_goods) {
-      const rate = state.fx_rate_goods;
-      const diffUsd = totalPrecio - totalCosto;
-      state.goods_amounts = {
-        base: {
-          usd: totalCosto,
-          pyg: totalCosto * rate
-        },
-        fee: {
-          usd: diffUsd,
-          pyg: diffUsd * rate
-        },
-        total: {
-          usd: totalPrecio,
-          pyg: totalPrecio * rate
-        }
-      };
-    }
-
-    if (cur === 4) renderHumanReview();
-    return;
-  }
-
-  try {
-    const res = await fetch('/cases/quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        kind: 'GOODS',
-        customer_id: 1,
-        items_total: itemsTotal,
-        shipping_cost: shippingCost,
-        fee_type: (state.fee_mode === 'PCT') ? 1 : (state.fee_mode === 'FIX' ? 2 : 1)
-      })
-    });
-
-    const text = await res.text();
-    let json; try { json = JSON.parse(text); } catch { json = null; }
-
-    if(!res.ok){
-      console.error('HTTP', res.status, text);
-      throw new Error('HTTP '+res.status);
-    }
-
-    const node = Array.isArray(json) ? json[0] : json;
-    if(!node || node.ok !== true || !node.quote){
-      console.error('Respuesta inesperada:', json);
-      throw new Error('Formato de respuesta inválido');
-    }
-
-    const quote = node.quote;
-
-    const totalPrecio = Number(quote.total || 0);
-    const totalCosto  = itemsTotal;
-    const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
-
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    rows.forEach((row, i)=>{
-      const costUnit  = Number(row.querySelector('.in-cost').value || 0);
-      const priceUnit = costUnit * factor;
-      row.querySelector('.in-price').value = priceUnit.toFixed(2);
-      state.items[i].price_usd = priceUnit;
-    });
-
-    recalcTotals();
-
-    const fxObj = node.fx || quote.fx || null;
-    if (fxObj && fxObj.rate != null) {
-      const rate = Number(fxObj.rate);
       state.fx_rate_goods = rate;
-      state.fx_goods_date = fxObj.date || new Date().toISOString().slice(0,10);
-      state.fx_goods_pair = fxObj.pair || 'USD/PYG';
+      state.fx_goods_date = date;
+      state.fx_goods_pair = pair;
 
-      const diffUsd = totalPrecio - totalCosto;
-      state.goods_amounts = {
-        base: {
-          usd: totalCosto,
-          pyg: totalCosto * rate
-        },
-        fee: {
-          usd: diffUsd,
-          pyg: diffUsd * rate
-        },
-        total: {
-          usd: totalPrecio,
-          pyg: totalPrecio * rate
-        }
-      };
+      const $fx = document.getElementById('fx-goods');
+      if ($fx) {
+        $fx.innerText = rate ? `${pair} @ ${rate.toFixed(2)}` : 'Sin FX';
+      }
+
+      if (state.case_type === 'GOODS' && state.items.length) {
+        await recalcPrices();
+      }
+      if (cur === 4) renderHumanReview();
+
+    } catch (e) {
+      console.warn('No se pudo cargar FX GOODS:', e);
+      state.fx_rate_goods = null;
+      state.fx_goods_date = null;
+      state.fx_goods_pair = 'USD/PYG';
+
+      const $fx = document.getElementById('fx-goods');
+      if ($fx) {
+        $fx.innerText = 'Sin FX';
+      }
+    }
+  }
+
+  // Toggle envío en paso 1
+  document.getElementById('in-ship-enable').addEventListener('change', async (ev)=>{
+    state.shipping.enabled = ev.target.checked;
+    document.getElementById('ship-badge').classList.toggle('d-none', !state.shipping.enabled);
+    if (state.case_type==='GOODS' && state.items.length){ await recalcPrices(); }
+    if (cur === 4) renderHumanReview();
+  });
+
+  /* ===== Sync desde UI al state ===== */
+  async function syncFromUI(step){
+    if(step===1){
+      state.case_type = document.getElementById('in-case-type').value;
+      state.notify    = document.getElementById('in-notify').value;
+      state.fee_mode  = document.getElementById('in-fee-mode').value;
+      state.notes     = document.getElementById('in-notes').value.trim();
+
+      const goods = (state.case_type==='GOODS');
+      document.getElementById('panel-goods-contact').classList.toggle('d-none', !goods);
+      document.getElementById('panel-remit-contact').classList.toggle('d-none', goods);
+      document.getElementById('panel-goods-details').classList.toggle('d-none', !goods);
+      document.getElementById('panel-remit-details').classList.toggle('d-none', goods);
+
+      document.getElementById('ship-col').classList.toggle('d-none', !goods);
+      if (!goods){
+        state.shipping.enabled = false;
+        document.getElementById('in-ship-enable').checked = false;
+        document.getElementById('ship-badge').classList.add('d-none');
+      }
     }
 
-    if (cur === 4) renderHumanReview();
-  } catch (e){
-    console.error('recalcPrices error:', e);
-    toast('No se pudieron calcular los precios');
-  }
-}
+    if(step===2){
+      if(state.case_type==='GOODS'){
+        state.customer.name  = document.getElementById('goods-customer-name').value.trim();
+        state.customer.phone = document.getElementById('goods-customer-phone').value.trim();
+        state.destination.country = document.getElementById('goods-dst-country').value;
+      } else {
+        state.sender.name    = document.getElementById('remit-sender-name').value.trim();
+        state.sender.phone   = document.getElementById('remit-sender-phone').value.trim();
+        state.receiver.name  = document.getElementById('remit-receiver-name').value.trim();
+        state.receiver.phone = document.getElementById('remit-receiver-phone').value.trim();
+        const sc = document.getElementById('remit-sender-country').value;
+        const rc = document.getElementById('remit-receiver-country').value;
+        state.sender.country   = sc;
+        state.receiver.country = rc;
+        updateRemitQuoteUI(null);
+      }
+    }
 
-function recalcTotals(){
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  let sumQty=0, sumCost=0, sumPrice=0;
-  rows.forEach(r=>{
-    const qty   = Number(r.querySelector('.in-qty').value || 0);
-    const cost  = Number(r.querySelector('.in-cost').value || 0);
-    const price = Number(r.querySelector('.in-price').value || 0);
-    sumQty   += qty;
-    sumCost  += qty * cost;
-    sumPrice += qty * price;
+    if(step===3){
+      if(state.case_type==='GOODS'){
+        syncItems();
+        await recalcPrices();
+      } else {
+        const amt = parseFloat(document.getElementById('remit-amount').value);
+        state.amount_usd = isNaN(amt) ? null : amt;
+        await recalcRemit();
+      }
+    }
+
+    if(step===4){
+      renderHumanReview();
+    }
+  }
+
+  function validate(step){
+    if(step===1) return true;
+
+    if(step===2){
+      if(state.case_type==='GOODS'){
+        if(!state.customer.name || !state.customer.phone){ toast('Completá nombre y teléfono'); return false; }
+        return true;
+      } else {
+        if(!state.sender.name || !state.sender.phone){ toast('Completá remitente'); return false; }
+        if(!state.receiver.name || !state.receiver.phone){ toast('Completá receptor'); return false; }
+        return true;
+      }
+    }
+
+    if(step===3){
+      if(state.case_type==='GOODS'){
+        if(state.items.length===0){ toast('Agregá al menos un ítem'); return false; }
+        return true;
+      } else {
+        if(!state.amount_usd || state.amount_usd<=0){ toast('Ingresá un monto válido'); return false; }
+        return true;
+      }
+    }
+
+    return true;
+  }
+
+  function inferPairFromCountries(senderCountry, receiverCountry){
+    if (senderCountry === 'US' && receiverCountry === 'PY') return 'USD/PYG';
+    if (senderCountry === 'PY' && receiverCountry === 'US') return 'PYG/USD';
+    return 'USD/PYG';
+  }
+
+  document.getElementById('btn-next').addEventListener('click', async ()=>{
+    await syncFromUI(cur);
+    if(!validate(cur)) return;
+    cur = Math.min(MAX, cur+1);
+    updateStepper();
+    if (cur === 4) renderHumanReview();
   });
-  document.getElementById('sum-qty').innerText   = sumQty;
-  document.getElementById('sum-cost').innerText  = 'USD ' + sumCost.toFixed(2);
-  document.getElementById('sum-price').innerText = 'USD ' + sumPrice.toFixed(2);
-  document.getElementById('total-cost').innerText  = 'USD ' + sumCost.toFixed(2);
-  document.getElementById('total-price').innerText = 'USD ' + sumPrice.toFixed(2);
-  document.getElementById('total-diff').innerText  = 'USD ' + (sumPrice - sumCost).toFixed(2);
-  if (cur === 4) renderHumanReview();
-}
 
-/* ===== Cotización REMIT ===== */
-function updateRemitQuoteUI(quote){
-  const amt = Number(state.amount_usd || 0);
-  const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
-  const receiverFlag = state.receiver.country === 'US' ? '🇺🇸' : '🇵🇾';
-  const senderName   = state.sender.name || 'Remitente';
-  const receiverName = state.receiver.name || 'Receptor';
+  document.getElementById('btn-prev').addEventListener('click', ()=>{
+    cur = Math.max(1, cur-1);
+    updateStepper();
+  });
 
-  document.getElementById('remit-desc-names').innerText = `${senderName} → ${receiverName}`;
+  /* ===== Ítems (GOODS) ===== */
+  const tbody = document.querySelector('#tbl-items tbody');
 
-  const $amtInput = document.getElementById('remit-amount');
-  if($amtInput && !$amtInput.matches(':focus')){
-    $amtInput.value = amt ? amt.toFixed(2) : '';
-  }
-  document.getElementById('remit-sum-amt').innerText = 'USD ' + amt.toFixed(2);
+  document.getElementById('btn-add-item').addEventListener('click', ()=>{
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input class="form-control form-control-sm in-desc" placeholder="Ej: iPhone 17 Pro Max"></td>
+      <td><input type="number" min="1" value="1" class="form-control form-control-sm in-qty"></td>
+      <td><input type="number" step="0.01" value="0" class="form-control form-control-sm in-cost" placeholder="USD"></td>
+      <td><input type="number" step="0.01" value="0" class="form-control form-control-sm in-price" placeholder="auto" disabled></td>
+      <td><button class="btn btn-sm btn-outline-danger btn-pill btn-del">✖</button></td>
+    `;
+    tbody.appendChild(row);
 
-  if (!quote){
-    document.getElementById('remit-col-fx').innerText          = '-';
-    document.getElementById('remit-col-charge-usd').innerText  = 'USD 0.00';
-    document.getElementById('remit-col-charge-py').innerText   = formatGs(0);
-    document.getElementById('remit-sum-charge-usd').innerText  = 'USD 0.00';
-    document.getElementById('remit-sum-charge-py').innerText   = formatGs(0);
-    document.getElementById('remit-total-cost').innerText      = 'USD ' + amt.toFixed(2);
-    document.getElementById('remit-total-price').innerText     = 'USD 0.00';
-    document.getElementById('remit-total-diff').innerText      = 'USD 0.00';
-    return;
-  }
+    row.querySelector('.btn-del').onclick = ()=> { row.remove(); recalcTotals(); };
 
-  const fxObj   = quote.fx || {};
-  const fxRate  = Number(fxObj.rate || quote.fx_rate || 0);
-  const basePy  = Number(quote.base_py || 0);
-  const feePy   = Number(quote.fee_amount || 0);
-  const totalPy = Number(quote.total_py || 0);
-
-  const baseUsd  = Number(state.amount_usd || 0);
-  const feeUsd   = fxRate ? (feePy / fxRate) : 0;
-  const totalUsd = baseUsd + feeUsd;
-
-  state.fx_rate = fxRate || null;
-  state.fx_date = fxObj.date || null;
-  state.fx_pair = fxObj.pair || inferPairFromCountries(state.sender.country, state.receiver.country);
-
-  state.remit_fee_amount      = feeUsd;
-  state.remit_fee_currency    = 'USD';
-  state.remit_total_charge    = totalUsd;
-  state.remit_currency_charge = 'USD';
-
-  state.remit_breakdown_py = {
-    base_py: basePy,
-    fee_py:  feePy,
-    total_py: totalPy
-  };
-
-  document.getElementById('remit-col-fx').innerText         = fxRate ? fxRate.toFixed(2) : '-';
-  document.getElementById('remit-col-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
-  document.getElementById('remit-col-charge-py').innerText  = formatGs(totalPy);
-
-  document.getElementById('remit-sum-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
-  document.getElementById('remit-sum-charge-py').innerText  = formatGs(totalPy);
-
-  document.getElementById('remit-total-cost').innerText  = 'USD ' + amt.toFixed(2);
-  document.getElementById('remit-total-price').innerText = 'USD ' + totalUsd.toFixed(2);
-  document.getElementById('remit-total-diff').innerText  = 'USD ' + (totalUsd - amt).toFixed(2);
-}
-
-async function recalcRemit(){
-  if (state.case_type !== 'REMIT') return;
-  if (!state.amount_usd || state.amount_usd <= 0){
-    updateRemitQuoteUI(null);
-    if (cur === 4) renderHumanReview();
-    return;
-  }
-
-  const pair = inferPairFromCountries(state.sender.country, state.receiver.country);
-
-  let feeType;
-  let feeOverride = null;
-  if (state.fee_mode === 'PCT') {
-    feeType = 1;
-  } else if (state.fee_mode === 'FIX') {
-    feeType = 2;
-  } else {
-    feeType = 0;
-    feeOverride = { fee_pct: 0, fee_flat: 0 };
-  }
-
-  try{
-    const res = await fetch('/cases/quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        kind: 'REMIT',
-        customer_id: 1,
-        amount_usd: state.amount_usd,
-        pair: pair,
-        fee_type: feeType,
-        fee_override: feeOverride
-      })
+    ['.in-desc','.in-qty','.in-cost'].forEach(sel=>{
+      row.querySelector(sel).addEventListener('input', async ()=>{
+        syncItems();
+        await recalcPrices();
+      });
     });
+  });
+
+  function syncItems(){
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    state.items = rows.map(r=>({
+      description: r.querySelector('.in-desc').value.trim(),
+      qty: Number(r.querySelector('.in-qty').value || 1),
+      cost_usd: Number(r.querySelector('.in-cost').value || 0),
+      price_usd: Number(r.querySelector('.in-price').value || 0)
+    })).filter(x=>x.description);
+  }
+
+  /* ===== Recalcular precios y totales (GOODS) ===== */
+  document.getElementById('btn-recalc').addEventListener('click', ()=> recalcPrices());
+
+  async function recalcPrices(){
+    if(state.case_type !== 'GOODS'){ return; }
+    if(state.items.length===0){ recalcTotals(); return; }
+
+    const itemsTotal = state.items.reduce(
+      (acc, it)=> acc + (Number(it.cost_usd||0) * Number(it.qty||0)), 0
+    );
+
+    const shippingCost = state.shipping.enabled ? Number(state.shipping.amount || 0) : 0;
+
+    if(state.fee_mode === 'NONE'){
+      const totalCosto  = itemsTotal;
+      const totalPrecio = totalCosto + shippingCost;
+      const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.forEach((row, i)=>{
+        const costUnit = Number(row.querySelector('.in-cost').value || 0);
+        const priceUnit = costUnit * factor;
+        row.querySelector('.in-price').value = priceUnit.toFixed(2);
+        state.items[i].price_usd = priceUnit;
+      });
+
+      recalcTotals();
+
+      if (state.fx_rate_goods) {
+        const rate = state.fx_rate_goods;
+        const diffUsd = totalPrecio - totalCosto;
+        state.goods_amounts = {
+          base: {
+            usd: totalCosto,
+            pyg: totalCosto * rate
+          },
+          fee: {
+            usd: diffUsd,
+            pyg: diffUsd * rate
+          },
+          total: {
+            usd: totalPrecio,
+            pyg: totalPrecio * rate
+          }
+        };
+      }
+
+      if (cur === 4) renderHumanReview();
+      return;
+    }
+
+    try {
+      const res = await fetch('/cases/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'GOODS',
+          customer_id: 1,
+          items_total: itemsTotal,
+          shipping_cost: shippingCost,
+          fee_type: (state.fee_mode === 'PCT') ? 1 : (state.fee_mode === 'FIX' ? 2 : 1)
+        })
+      });
+
+      const text = await res.text();
+      let json; try { json = JSON.parse(text); } catch { json = null; }
+
+      if(!res.ok){
+        console.error('HTTP', res.status, text);
+        throw new Error('HTTP '+res.status);
+      }
+
+      const node = Array.isArray(json) ? json[0] : json;
+      if(!node || node.ok !== true || !node.quote){
+        console.error('Respuesta inesperada:', json);
+        throw new Error('Formato de respuesta inválido');
+      }
+
+      const quote = node.quote;
+
+      const totalPrecio = Number(quote.total || 0);
+      const totalCosto  = itemsTotal;
+      const factor = totalCosto > 0 ? (totalPrecio / totalCosto) : 1;
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.forEach((row, i)=>{
+        const costUnit  = Number(row.querySelector('.in-cost').value || 0);
+        const priceUnit = costUnit * factor;
+        row.querySelector('.in-price').value = priceUnit.toFixed(2);
+        state.items[i].price_usd = priceUnit;
+      });
+
+      recalcTotals();
+
+      const fxObj = node.fx || quote.fx || null;
+      if (fxObj && fxObj.rate != null) {
+        const rate = Number(fxObj.rate);
+        state.fx_rate_goods = rate;
+        state.fx_goods_date = fxObj.date || new Date().toISOString().slice(0,10);
+        state.fx_goods_pair = fxObj.pair || 'USD/PYG';
+
+        const diffUsd = totalPrecio - totalCosto;
+        state.goods_amounts = {
+          base: {
+            usd: totalCosto,
+            pyg: totalCosto * rate
+          },
+          fee: {
+            usd: diffUsd,
+            pyg: diffUsd * rate
+          },
+          total: {
+            usd: totalPrecio,
+            pyg: totalPrecio * rate
+          }
+        };
+      }
+
+      if (cur === 4) renderHumanReview();
+    } catch (e){
+      console.error('recalcPrices error:', e);
+      toast('No se pudieron calcular los precios');
+    }
+  }
+
+  function recalcTotals(){
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    let sumQty=0, sumCost=0, sumPrice=0;
+    rows.forEach(r=>{
+      const qty   = Number(r.querySelector('.in-qty').value || 0);
+      const cost  = Number(r.querySelector('.in-cost').value || 0);
+      const price = Number(r.querySelector('.in-price').value || 0);
+      sumQty   += qty;
+      sumCost  += qty * cost;
+      sumPrice += qty * price;
+    });
+    document.getElementById('sum-qty').innerText   = sumQty;
+    document.getElementById('sum-cost').innerText  = 'USD ' + sumCost.toFixed(2);
+    document.getElementById('sum-price').innerText = 'USD ' + sumPrice.toFixed(2);
+    document.getElementById('total-cost').innerText  = 'USD ' + sumCost.toFixed(2);
+    document.getElementById('total-price').innerText = 'USD ' + sumPrice.toFixed(2);
+    document.getElementById('total-diff').innerText  = 'USD ' + (sumPrice - sumCost).toFixed(2);
+    if (cur === 4) renderHumanReview();
+  }
+
+  /* ===== Cotización REMIT ===== */
+  function updateRemitQuoteUI(quote){
+    const amt = Number(state.amount_usd || 0);
+    const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
+    const receiverFlag = state.receiver.country === 'US' ? '🇺🇸' : '🇵🇾';
+    const senderName   = state.sender.name || 'Remitente';
+    const receiverName = state.receiver.name || 'Receptor';
+
+    document.getElementById('remit-desc-names').innerText = `${senderName} → ${receiverName}`;
+
+    const $amtInput = document.getElementById('remit-amount');
+    if($amtInput && !$amtInput.matches(':focus')){
+      $amtInput.value = amt ? amt.toFixed(2) : '';
+    }
+    document.getElementById('remit-sum-amt').innerText = 'USD ' + amt.toFixed(2);
+
+    if (!quote){
+      document.getElementById('remit-col-fx').innerText          = '-';
+      document.getElementById('remit-col-charge-usd').innerText  = 'USD 0.00';
+      document.getElementById('remit-col-charge-py').innerText   = formatGs(0);
+      document.getElementById('remit-sum-charge-usd').innerText  = 'USD 0.00';
+      document.getElementById('remit-sum-charge-py').innerText   = formatGs(0);
+      document.getElementById('remit-total-cost').innerText      = 'USD ' + amt.toFixed(2);
+      document.getElementById('remit-total-price').innerText     = 'USD 0.00';
+      document.getElementById('remit-total-diff').innerText      = 'USD 0.00';
+      return;
+    }
+
+    const fxObj   = quote.fx || {};
+    const fxRate  = Number(fxObj.rate || quote.fx_rate || 0);
+    const basePy  = Number(quote.base_py || 0);
+    const feePy   = Number(quote.fee_amount || 0);
+    const totalPy = Number(quote.total_py || 0);
+
+    const baseUsd  = Number(state.amount_usd || 0);
+    const feeUsd   = fxRate ? (feePy / fxRate) : 0;
+    const totalUsd = baseUsd + feeUsd;
+
+    state.fx_rate = fxRate || null;
+    state.fx_date = fxObj.date || null;
+    state.fx_pair = fxObj.pair || inferPairFromCountries(state.sender.country, state.receiver.country);
+
+    state.remit_fee_amount      = feeUsd;
+    state.remit_fee_currency    = 'USD';
+    state.remit_total_charge    = totalUsd;
+    state.remit_currency_charge = 'USD';
+
+    state.remit_breakdown_py = {
+      base_py: basePy,
+      fee_py:  feePy,
+      total_py: totalPy
+    };
+
+    document.getElementById('remit-col-fx').innerText         = fxRate ? fxRate.toFixed(2) : '-';
+    document.getElementById('remit-col-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
+    document.getElementById('remit-col-charge-py').innerText  = formatGs(totalPy);
+
+    document.getElementById('remit-sum-charge-usd').innerText = 'USD ' + totalUsd.toFixed(2);
+    document.getElementById('remit-sum-charge-py').innerText  = formatGs(totalPy);
+
+    document.getElementById('remit-total-cost').innerText  = 'USD ' + amt.toFixed(2);
+    document.getElementById('remit-total-price').innerText = 'USD ' + totalUsd.toFixed(2);
+    document.getElementById('remit-total-diff').innerText  = 'USD ' + (totalUsd - amt).toFixed(2);
+  }
+
+  async function recalcRemit(){
+    if (state.case_type !== 'REMIT') return;
+    if (!state.amount_usd || state.amount_usd <= 0){
+      updateRemitQuoteUI(null);
+      if (cur === 4) renderHumanReview();
+      return;
+    }
+
+    const pair = inferPairFromCountries(state.sender.country, state.receiver.country);
+
+    let feeType;
+    let feeOverride = null;
+    if (state.fee_mode === 'PCT') {
+      feeType = 1;
+    } else if (state.fee_mode === 'FIX') {
+      feeType = 2;
+    } else {
+      feeType = 0;
+      feeOverride = { fee_pct: 0, fee_flat: 0 };
+    }
+
+    try{
+      const res = await fetch('/cases/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'REMIT',
+          customer_id: 1,
+          amount_usd: state.amount_usd,
+          pair: pair,
+          fee_type: feeType,
+          fee_override: feeOverride
+        })
+      });
 
     const txt = await res.text();
     let json; try { json = JSON.parse(txt); } catch { json = null; }
@@ -1144,391 +1367,432 @@ async function recalcRemit(){
       throw new Error('HTTP '+res.status);
     }
 
-    const node = json;
+    // Igual que GOODS: soportar array o objeto plano
+    const node = Array.isArray(json) ? json[0] : json;
+
     if (!node || node.ok !== true || !node.quote){
       console.error('Respuesta inesperada (REMIT):', json);
       throw new Error('Formato de respuesta inválido');
     }
 
     updateRemitQuoteUI(node.quote);
-    if (cur === 4) renderHumanReview();
-  }catch(e){
-    console.error('recalcRemit error:', e);
-    toast('No se pudo calcular la remesa');
-  }
-}
 
-document.getElementById('btn-recalc-remit').addEventListener('click', async ()=>{
-  await syncFromUI(2);
-  await syncFromUI(3);
-});
-
-/* ===== Auto-pareja de países REMIT ===== */
-let remitSenderTouched = false;
-let remitReceiverTouched = false;
-
-const $remitSenderCountry   = document.getElementById('remit-sender-country');
-const $remitReceiverCountry = document.getElementById('remit-receiver-country');
-
-$remitSenderCountry.addEventListener('change', async (ev)=>{
-  if(ev.isTrusted){
-    remitSenderTouched = true;
-    if(!remitReceiverTouched){
-      $remitReceiverCountry.value = (ev.target.value === 'US') ? 'PY' : 'US';
+      if (cur === 4) renderHumanReview();
+    }catch(e){
+      console.error('recalcRemit error:', e);
+      toast('No se pudo calcular la remesa');
     }
   }
-  await syncFromUI(2);
-  if(state.case_type==='REMIT'){ await recalcRemit(); }
-});
 
-$remitReceiverCountry.addEventListener('change', async (ev)=>{
-  if(ev.isTrusted){
-    remitReceiverTouched = true;
-    if(!remitSenderTouched){
-      $remitSenderCountry.value = (ev.target.value === 'US') ? 'PY' : 'US';
+  document.getElementById('btn-recalc-remit').addEventListener('click', async ()=>{
+    await syncFromUI(2);
+    await syncFromUI(3);
+  });
+
+  /* ===== Auto-pareja de países REMIT ===== */
+  let remitSenderTouched = false;
+  let remitReceiverTouched = false;
+
+  const $remitSenderCountry   = document.getElementById('remit-sender-country');
+  const $remitReceiverCountry = document.getElementById('remit-receiver-country');
+
+  $remitSenderCountry.addEventListener('change', async (ev)=>{
+    if(ev.isTrusted){
+      remitSenderTouched = true;
+      if(!remitReceiverTouched){
+        $remitReceiverCountry.value = (ev.target.value === 'US') ? 'PY' : 'US';
+      }
+    }
+    await syncFromUI(2);
+    if(state.case_type==='REMIT'){ await recalcRemit(); }
+  });
+
+  $remitReceiverCountry.addEventListener('change', async (ev)=>{
+    if(ev.isTrusted){
+      remitReceiverTouched = true;
+      if(!remitSenderTouched){
+        $remitSenderCountry.value = (ev.target.value === 'US') ? 'PY' : 'US';
+      }
+    }
+    await syncFromUI(2);
+    if(state.case_type==='REMIT'){ await recalcRemit(); }
+  });
+
+  /* ===== Resumen humano ===== */
+  function renderHumanReview(){
+    const el = document.getElementById('review-human');
+    if (!el) return;
+
+    if(state.case_type==='GOODS'){
+      let sumCost=0, sumPrice=0;
+      const itemsHtml = (state.items || []).map(x=>{
+        const lineCost  = (x.qty||0) * (x.cost_usd||0);
+        const linePrice = (x.qty||0) * (x.price_usd||0);
+        sumCost  += lineCost;
+        sumPrice += linePrice;
+        return `
+          <li>
+            <span><b>${x.qty}×</b> ${x.description}</span>
+            <span class="chip">Costo USD ${(x.cost_usd||0).toFixed(2)}</span>
+            <span class="chip teal">Precio USD ${(x.price_usd||0).toFixed(2)}</span>
+          </li>
+        `;
+      }).join('');
+
+      const feeTxt = state.fee_mode==='PCT' ? 'Con fee %'
+                  : state.fee_mode==='FIX' ? 'Con fee fijo'
+                  : 'Sin fee';
+
+      const countryLabel = (state.destination.country==='US') ? '🇺🇸 USA' : '🇵🇾 Paraguay';
+
+      el.innerHTML = `
+        <div class="review-header">
+          <span class="chip indigo">Tipo: GOODS</span>
+          <span class="chip">${countryLabel}</span>
+          <span class="chip ${state.fee_mode==='NONE'?'rose':(state.fee_mode==='PCT'?'teal':'amber')}">${feeTxt}</span>
+          ${state.shipping.enabled ? `<span class="chip">🚚 Envío: <b>${state.shipping.currency} ${Number(state.shipping.amount||0).toFixed(2)}</b></span>` : ``}
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="review-section-title">Contacto</div>
+            <div class="review-meta">
+              <div><b>Notificar a:</b> ${state.notify}</div>
+              <div><b>Cliente:</b> ${state.customer.name || '-'} — ${state.customer.phone || '-'}</div>
+              ${state.notes ? `<div><b>Notas:</b> ${state.notes}</div>` : ``}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="review-section-title">Totales estimados</div>
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              <span class="chip">Total costo: <b>USD ${sumCost.toFixed(2)}</b></span>
+              <span class="chip teal">Total precio: <b>USD ${sumPrice.toFixed(2)}</b></span>
+              <span class="chip success">Diferencia: <b>USD ${(sumPrice - sumCost).toFixed(2)}</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-items mt-3">
+          <div class="review-section-title">Ítems</div>
+          <ul class="mt-1">
+            ${itemsHtml || '<li>-</li>'}
+          </ul>
+        </div>
+      `;
+    } else {
+      const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
+      const receiverFlag = state.receiver.country === 'US' ? '🇺🇸' : '🇵🇾';
+
+      const feeTxt = state.fee_mode==='PCT' ? 'Con fee %'
+                  : state.fee_mode==='FIX' ? 'Con fee fijo'
+                  : 'Sin fee';
+
+      const amt = Number(state.amount_usd || 0);
+      const fxTxt   = state.fx_rate ? state.fx_rate.toFixed(2) : '-';
+      const feeAmt  = (state.remit_fee_amount != null) ? `${state.remit_fee_currency} ${state.remit_fee_amount.toFixed(2)}` : '-';
+      const totTxt  = (state.remit_total_charge != null) ? `${state.remit_currency_charge} ${state.remit_total_charge.toFixed(2)}` : '-';
+
+      el.innerHTML = `
+        <div class="review-header">
+          <span class="chip indigo">Tipo: REMIT</span>
+          <span class="chip">${senderFlag} → ${receiverFlag}</span>
+          <span class="chip ${state.fee_mode==='NONE'?'rose':(state.fee_mode==='PCT'?'teal':'amber')}">${feeTxt}</span>
+          <span class="chip">📣 ${state.notify}</span>
+          ${state.notes ? `<span class="chip amber">🗒️ ${state.notes}</span>` : ``}
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="review-section-title">Personas</div>
+            <div class="review-meta">
+              <div><b>Remitente:</b> ${state.sender.name || '-'} — ${state.sender.phone || '-'} (${senderFlag})</div>
+              <div><b>Receptor:</b> ${state.receiver.name || '-'} — ${state.receiver.phone || '-'} (${receiverFlag})</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="review-section-title">Montos estimados</div>
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              <span class="chip teal">Monto a enviar: <b>USD ${amt.toFixed(2)}</b></span>
+              <span class="chip">Tasa cambio: <b>${fxTxt}</b></span>
+              <span class="chip amber">Fee estimado: <b>${feeAmt}</b></span>
+              <span class="chip success">Monto a cobrar: <b>${totTxt}</b></span>
+            </div>
+          </div>
+        </div>
+      `;
     }
   }
-  await syncFromUI(2);
-  if(state.case_type==='REMIT'){ await recalcRemit(); }
-});
 
-/* ===== Resumen humano ===== */
-function renderHumanReview(){
-  const el = document.getElementById('review-human');
-  if(state.case_type==='GOODS'){
-    let sumCost=0, sumPrice=0;
-    const lines = state.items.map(x=>{
-      const lineCost  = (x.qty||0) * (x.cost_usd||0);
-      const linePrice = (x.qty||0) * (x.price_usd||0);
-      sumCost  += lineCost;
-      sumPrice += linePrice;
-      return `<li>${x.qty} × ${x.description} — <span class="chip">🧾 Costo USD ${(x.cost_usd||0).toFixed(2)}</span> <span class="chip teal">💰 Precio USD ${(x.price_usd||0).toFixed(2)}</span></li>`;
-    }).join('');
 
-    const feeTxt = state.fee_mode==='PCT' ? 'Con fee %'
-                 : state.fee_mode==='FIX' ? 'Con fee fijo'
-                 : 'Sin fee';
+  async function ensureCustomerForCase() {
+    let name, phone, country;
 
-    el.innerHTML = `
-      <div class="mb-2">
-        <span class="chip indigo">Tipo: GOODS</span>
-        <span class="chip">${state.destination.country==='US'?'🇺🇸 USA':'🇵🇾 Paraguay'}</span>
-        <span class="chip ${state.fee_mode==='NONE'?'rose':(state.fee_mode==='PCT'?'teal':'amber')}">${feeTxt}</span>
-        ${state.shipping.enabled ? `<span class="chip">🚚 Envío: <b>${state.shipping.currency} ${Number(state.shipping.amount||0).toFixed(2)}</b></span>` : ``}
-      </div>
-      <div class="mb-2"><b>Notificar a:</b> ${state.notify}</div>
-      ${state.notes ? `<div class="mb-2"><b>Notas:</b> ${state.notes}</div>` : ``}
-      <div class="mb-2"><b>Cliente:</b> ${state.customer.name || '-'} — ${state.customer.phone || '-'}</div>
-      <div class="mb-2"><b>Ítems:</b><ul class="mt-2">${lines || '<li>-</li>'}</ul></div>
-      <div class="mt-2 d-flex flex-wrap gap-2">
-        <span class="chip">🧾 Total Costo: <b>USD ${sumCost.toFixed(2)}</b></span>
-        <span class="chip teal">💰 Total Precio: <b>USD ${sumPrice.toFixed(2)}</b></span>
-        <span class="chip success">📈 Dif: <b>USD ${(sumPrice - sumCost).toFixed(2)}</b></span>
-      </div>
-    `;
-  } else {
-    const senderFlag   = state.sender.country === 'US' ? '🇺🇸' : '🇵🇾';
-    const receiverFlag = state.receiver.country === 'US' ? '🇺🇸' : '🇵🇾';
+    if (state.case_type === 'GOODS') {
+      name    = (state.customer.name  || '').trim();
+      phone   = (state.customer.phone || '').trim();
+      country = state.destination.country || 'PY';
+    } else {
+      // Para REMIT, tomamos como "cliente principal" al remitente
+      name    = (state.sender.name  || '').trim();
+      phone   = (state.sender.phone || '').trim();
+      country = state.sender.country || 'US';
+    }
 
-    const feeTxt = state.fee_mode==='PCT' ? 'Con fee %'
-                 : state.fee_mode==='FIX' ? 'Con fee fijo'
-                 : 'Sin fee';
-
-    const amt = Number(state.amount_usd || 0);
-    const fxTxt   = state.fx_rate ? state.fx_rate.toFixed(2) : '-';
-    const feeAmt  = (state.remit_fee_amount != null) ? `${state.remit_fee_currency} ${state.remit_fee_amount.toFixed(2)}` : '-';
-    const totTxt  = (state.remit_total_charge != null) ? `${state.remit_currency_charge} ${state.remit_total_charge.toFixed(2)}` : '-';
-
-    el.innerHTML = `
-      <div class="mb-2">
-        <span class="chip indigo">Tipo: REMIT</span>
-        <span class="chip">${senderFlag} → ${receiverFlag}</span>
-        <span class="chip ${state.fee_mode==='NONE'?'rose':(state.fee_mode==='PCT'?'teal':'amber')}">${feeTxt}</span>
-        <span class="chip">📣 ${state.notify}</span>
-        ${state.notes ? `<span class="chip amber">🗒️ ${state.notes}</span>` : ``}
-      </div>
-      <div class="mb-2"><b>Remitente:</b> ${state.sender.name || '-'} — ${state.sender.phone || '-'} (${senderFlag})</div>
-      <div class="mb-2"><b>Receptor:</b> ${state.receiver.name || '-'} — ${state.receiver.phone || '-'} (${receiverFlag})</div>
-      
-      <div class="d-flex flex-wrap gap-2 mt-2">
-        <span class="chip teal">💵 Monto a enviar: <b>USD ${amt.toFixed(2)}</b></span>
-        <span class="chip">💱 Tasa cambio: <b>${fxTxt}</b></span>
-        <span class="chip amber">📎 Fee estimado: <b>${feeAmt}</b></span>
-        <span class="chip success">💰 Monto a cobrar: <b>${totTxt}</b></span>
-      </div>
-    `;
-  }
-}
-
-async function ensureCustomerForCase() {
-  let name, phone, country;
-
-  if (state.case_type === 'GOODS') {
-    name    = (state.customer.name  || '').trim();
-    phone   = (state.customer.phone || '').trim();
-    country = state.destination.country || 'PY';
-  } else {
-    // Para REMIT, tomamos como "cliente principal" al remitente
-    name    = (state.sender.name  || '').trim();
-    phone   = (state.sender.phone || '').trim();
-    country = state.sender.country || 'US';
-  }
-
-  if (!name || !phone) {
-    // fallback: no podemos crear customer, se usará el default 1
-    return state.customer_id || 1;
-  }
-
-  const canonical = buildCanonicalPhone(country, phone);
-  if (!canonical) {
-    return state.customer_id || 1;
-  }
-
-  // Si ya tenemos un id (por lookup previo), usamos ese
-  if (state.customer_id) {
-    return state.customer_id;
-  }
-
-  // 1) Re-intentamos lookup, por si alguien más lo creó
-  const existing = await lookupCustomerByPhone(canonical);
-  if (existing && existing.id) {
-    state.customer_id = existing.id;
-    return existing.id;
-  }
-
-  // 2) Crear nuevo customer vía proxy web
-  try {
-    const resp = await fetch('/cases/customer-create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name,
-        phone: canonical
-      })
-    });
-
-    const txt = await resp.text();
-    let json; try { json = JSON.parse(txt); } catch { json = null; }
-
-    if (!resp.ok || !json || json.ok !== true) {
-      console.error('error creando customer', resp.status, txt);
+    if (!name || !phone) {
+      // fallback: no podemos crear customer, se usará el default 1
       return state.customer_id || 1;
     }
 
-    const newId = json.id || (json.customer && json.customer.id);
-    if (newId) {
-      state.customer_id = newId;
-      return newId;
+    const canonical = buildCanonicalPhone(country, phone);
+    if (!canonical) {
+      return state.customer_id || 1;
     }
-  } catch (e) {
-    console.error('ensureCustomerForCase error', e);
+
+    // Si ya tenemos un id (por lookup previo), usamos ese
+    if (state.customer_id) {
+      return state.customer_id;
+    }
+
+    // 1) Re-intentamos lookup, por si alguien más lo creó
+    const existing = await lookupCustomerByPhone(canonical);
+    if (existing && existing.id) {
+      state.customer_id = existing.id;
+      return existing.id;
+    }
+
+    // 2) Crear nuevo customer vía proxy web
+    try {
+      const resp = await fetch('/cases/customer-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name,
+          phone: canonical
+        })
+      });
+
+      const txt = await resp.text();
+      let json; try { json = JSON.parse(txt); } catch { json = null; }
+
+      if (!resp.ok || !json || json.ok !== true) {
+        console.error('error creando customer', resp.status, txt);
+        return state.customer_id || 1;
+      }
+
+      const newId = json.id || (json.customer && json.customer.id);
+      if (newId) {
+        state.customer_id = newId;
+        return newId;
+      }
+    } catch (e) {
+      console.error('ensureCustomerForCase error', e);
+    }
+
+    return state.customer_id || 1;
   }
 
-  return state.customer_id || 1;
-}
 
+  /* ===== Crear caso ===== */
+  document.getElementById('btn-create').addEventListener('click', async ()=>{
+    if(!validate(3)) return;
 
-/* ===== Crear caso ===== */
-document.getElementById('btn-create').addEventListener('click', async ()=>{
-  if(!validate(3)) return;
+    // Aseguramos que el estado tenga los datos de contacto
+    await syncFromUI(2);
 
-  // Aseguramos que el estado tenga los datos de contacto
-  await syncFromUI(2);
+    // Crear u obtener el customer en backend
+    const cid = await ensureCustomerForCase();
+    state.customer_id = cid;
 
-  // Crear u obtener el customer en backend
-  const cid = await ensureCustomerForCase();
-  state.customer_id = cid;
+    const payload = buildPayload();
 
-  const payload = buildPayload();
-
-  const r = await fetch('/cases/create', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-
-  let data = null;
-  const txt = await r.text();
-  try { data = JSON.parse(txt); } catch {}
-
-  if(r.ok){
-    toast('Caso creado ✔');
-    const id = data?.id;
-    setTimeout(()=> location.href = id ? `/cases/${id}` : `/cases/`, 700);
-  } else {
-    console.error('create_case error:', r.status, txt);
-    toast('No se pudo crear el caso');
-  }
-});
-
-/* ===== buildPayload: meta ESTÁNDAR ===== */
-function buildPayload() {
-  var meta = {
-    kind:     state.case_type,
-    notify:   state.notify || 'BOTH',
-    fee_mode: state.fee_mode,
-    notes:    state.notes || null
-  };
-
-  if (state.case_type === 'GOODS') {
-    meta.sender = {
-      name:    state.customer.name,
-      phone:   state.customer.phone,
-      country: state.destination.country || 'PY'
-    };
-    meta.receiver = null;
-  } else {
-    meta.sender = {
-      name:    state.sender.name,
-      phone:   state.sender.phone,
-      country: state.sender.country
-    };
-    meta.receiver = {
-      name:    state.receiver.name,
-      phone:   state.receiver.phone,
-      country: state.receiver.country
-    };
-  }
-
-  if (state.case_type === 'GOODS') {
-    var totalCostUsd  = 0;
-    var totalPriceUsd = 0;
-
-    const items = (state.items || []).map(function (x) {
-      var qty   = Number(x.qty       || 0);
-      var cost  = Number(x.cost_usd  || 0);
-      var price = Number(x.price_usd || 0);
-
-      totalCostUsd  += qty * cost;
-      totalPriceUsd += qty * price;
-
-      return {
-        description: x.description,
-        qty:         qty,
-        cost_usd:    cost,
-        price_usd:   price
-      };
+    const r = await fetch('/cases/create', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
     });
 
-    const diffUsd = totalPriceUsd - totalCostUsd;
+    let data = null;
+    const txt = await r.text();
+    try { data = JSON.parse(txt); } catch {}
 
-    var fxRateGoods = state.fx_rate_goods || null;
-    var fxDateGoods = state.fx_goods_date || new Date().toISOString().slice(0,10);
-    var fxPairGoods = state.fx_goods_pair || 'USD/PYG';
+    if(r.ok){
+      toast('Caso creado ✔');
+      const id = data?.id;
+      setTimeout(()=> location.href = id ? `/cases/${id}` : `/cases/`, 700);
+    } else {
+      console.error('create_case error:', r.status, txt);
+      toast('No se pudo crear el caso');
+    }
+  });
 
-    meta.fx = {
-      date: fxDateGoods,
-      pair: fxPairGoods,
-      rate: fxRateGoods
+  /* ===== buildPayload: meta ESTÁNDAR ===== */
+  function buildPayload() {
+    var meta = {
+      kind:     state.case_type,
+      notify:   state.notify || 'BOTH',
+      fee_mode: state.fee_mode,
+      notes:    state.notes || null
     };
 
-    if (fxRateGoods) {
-      meta.amounts = {
-        base: {
-          usd: totalCostUsd,
-          pyg: totalCostUsd * fxRateGoods
-        },
-        fee: {
-          usd: diffUsd,
-          pyg: diffUsd * fxRateGoods
-        },
-        total: {
-          usd: totalPriceUsd,
-          pyg: totalPriceUsd * fxRateGoods
-        }
-      };
-    } else {
-      meta.amounts = {
-        base:  { usd: totalCostUsd,  pyg: 0 },
-        fee:   { usd: diffUsd,       pyg: 0 },
-        total: { usd: totalPriceUsd, pyg: 0 }
-      };
-    }
-
-    meta.goods = {
-      destination: {
+    if (state.case_type === 'GOODS') {
+      meta.sender = {
+        name:    state.customer.name,
+        phone:   state.customer.phone,
         country: state.destination.country || 'PY'
-      },
-      shipping: {
-        enabled:  !!state.shipping.enabled,
-        amount:   Number(state.shipping.amount || 0),
-        currency: state.shipping.currency || 'USD'
-      },
-      items: items
-    };
-
-    meta.remit = null;
-
-  } else {
-    var baseUsd  = Number(state.amount_usd || 0);
-    var feeUsd   = Number(state.remit_fee_amount || 0);
-    var totalUsd = Number(state.remit_total_charge || 0);
-
-    var fxRateRemit = state.fx_rate || null;
-    var fxDateRemit = state.fx_date || new Date().toISOString().slice(0,10);
-    var fxPairRemit = state.fx_pair || inferPairFromCountries(state.sender.country, state.receiver.country);
-
-    meta.fx = {
-      date: fxDateRemit,
-      pair: fxPairRemit,
-      rate: fxRateRemit
-    };
-
-    var bp     = state.remit_breakdown_py || {};
-    var basePy = Number(bp.base_py || 0);
-    var feePy  = Number(bp.fee_py  || 0);
-    var totPy  = Number(bp.total_py|| 0);
-
-    if (fxRateRemit) {
-      meta.amounts = {
-        base:  { usd: baseUsd,  pyg: basePy },
-        fee:   { usd: feeUsd,   pyg: feePy  },
-        total: { usd: totalUsd, pyg: totPy  }
       };
+      meta.receiver = null;
     } else {
-      meta.amounts = {
-        base:  { usd: baseUsd,  pyg: 0 },
-        fee:   { usd: feeUsd,   pyg: 0 },
-        total: { usd: totalUsd, pyg: 0 }
+      meta.sender = {
+        name:    state.sender.name,
+        phone:   state.sender.phone,
+        country: state.sender.country
+      };
+      meta.receiver = {
+        name:    state.receiver.name,
+        phone:   state.receiver.phone,
+        country: state.receiver.country
       };
     }
 
-    const direction = `${state.sender.country || 'US'}→${state.receiver.country || 'PY'}`;
-    meta.remit = {
-      amount_usd: baseUsd,
-      direction:  direction
-    };
+    if (state.case_type === 'GOODS') {
+      var totalCostUsd  = 0;
+      var totalPriceUsd = 0;
 
-    meta.goods = null;
+      const items = (state.items || []).map(function (x) {
+        var qty   = Number(x.qty       || 0);
+        var cost  = Number(x.cost_usd  || 0);
+        var price = Number(x.price_usd || 0);
+
+        totalCostUsd  += qty * cost;
+        totalPriceUsd += qty * price;
+
+        return {
+          description: x.description,
+          qty:         qty,
+          cost_usd:    cost,
+          price_usd:   price
+        };
+      });
+
+      const diffUsd = totalPriceUsd - totalCostUsd;
+
+      var fxRateGoods = state.fx_rate_goods || null;
+      var fxDateGoods = state.fx_goods_date || new Date().toISOString().slice(0,10);
+      var fxPairGoods = state.fx_goods_pair || 'USD/PYG';
+
+      meta.fx = {
+        date: fxDateGoods,
+        pair: fxPairGoods,
+        rate: fxRateGoods
+      };
+
+      if (fxRateGoods) {
+        meta.amounts = {
+          base: {
+            usd: totalCostUsd,
+            pyg: totalCostUsd * fxRateGoods
+          },
+          fee: {
+            usd: diffUsd,
+            pyg: diffUsd * fxRateGoods
+          },
+          total: {
+            usd: totalPriceUsd,
+            pyg: totalPriceUsd * fxRateGoods
+          }
+        };
+      } else {
+        meta.amounts = {
+          base:  { usd: totalCostUsd,  pyg: 0 },
+          fee:   { usd: diffUsd,       pyg: 0 },
+          total: { usd: totalPriceUsd, pyg: 0 }
+        };
+      }
+
+      meta.goods = {
+        destination: {
+          country: state.destination.country || 'PY'
+        },
+        shipping: {
+          enabled:  !!state.shipping.enabled,
+          amount:   Number(state.shipping.amount || 0),
+          currency: state.shipping.currency || 'USD'
+        },
+        items: items
+      };
+
+      meta.remit = null;
+
+    } else {
+      var baseUsd  = Number(state.amount_usd || 0);
+      var feeUsd   = Number(state.remit_fee_amount || 0);
+      var totalUsd = Number(state.remit_total_charge || 0);
+
+      var fxRateRemit = state.fx_rate || null;
+      var fxDateRemit = state.fx_date || new Date().toISOString().slice(0,10);
+      var fxPairRemit = state.fx_pair || inferPairFromCountries(state.sender.country, state.receiver.country);
+
+      meta.fx = {
+        date: fxDateRemit,
+        pair: fxPairRemit,
+        rate: fxRateRemit
+      };
+
+      var bp     = state.remit_breakdown_py || {};
+      var basePy = Number(bp.base_py || 0);
+      var feePy  = Number(bp.fee_py  || 0);
+      var totPy  = Number(bp.total_py|| 0);
+
+      if (fxRateRemit) {
+        meta.amounts = {
+          base:  { usd: baseUsd,  pyg: basePy },
+          fee:   { usd: feeUsd,   pyg: feePy  },
+          total: { usd: totalUsd, pyg: totPy  }
+        };
+      } else {
+        meta.amounts = {
+          base:  { usd: baseUsd,  pyg: 0 },
+          fee:   { usd: feeUsd,   pyg: 0 },
+          total: { usd: totalUsd, pyg: 0 }
+        };
+      }
+
+      const direction = `${state.sender.country || 'US'}→${state.receiver.country || 'PY'}`;
+      meta.remit = {
+        amount_usd: baseUsd,
+        direction:  direction
+      };
+
+      meta.goods = null;
+    }
+
+    return {
+      case_type:   state.case_type,
+      customer_id: state.customer_id || 1,
+      contact_id:  1,
+      title:       (state.case_type === 'GOODS') ? 'GOODS Selva' : 'REMIT Selva',
+      meta:        meta
+    };
   }
 
-  return {
-    case_type:   state.case_type,
-    customer_id: state.customer_id || 1,
-    contact_id:  1,
-    title:       (state.case_type === 'GOODS') ? 'GOODS Selva' : 'REMIT Selva',
-    meta:        meta
-  };
-}
 
+  /* ===== Init ===== */
+  document.getElementById('in-case-type').addEventListener('change', ()=> syncFromUI(1));
+  document.getElementById('in-fee-mode').addEventListener('change', async ()=>{
+    await syncFromUI(1);
+    if(state.case_type==='GOODS'){ await recalcPrices(); }
+    if(state.case_type==='REMIT'){ await recalcRemit(); }
+    if (cur === 4) renderHumanReview();
+  });
 
-/* ===== Init ===== */
-document.getElementById('in-case-type').addEventListener('change', ()=> syncFromUI(1));
-document.getElementById('in-fee-mode').addEventListener('change', async ()=>{
-  await syncFromUI(1);
-  if(state.case_type==='GOODS'){ await recalcPrices(); }
-  if(state.case_type==='REMIT'){ await recalcRemit(); }
-  if (cur === 4) renderHumanReview();
-});
+  document.getElementById('remit-amount').addEventListener('input', async ()=>{
+    await syncFromUI(3);
+  });
 
-document.getElementById('remit-amount').addEventListener('input', async ()=>{
-  await syncFromUI(3);
-});
+  updateStepper();
+  syncFromUI(1);
+  loadShipping();
+  loadFxGoods();
+  </script>
 
-updateStepper();
-syncFromUI(1);
-loadShipping();
-loadFxGoods();
-</script>
-
-{% endblock %}
+  {% endblock %}

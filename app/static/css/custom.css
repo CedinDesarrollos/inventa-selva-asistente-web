@@ -1,4 +1,815 @@
-body { font-variant-numeric: tabular-nums; }
-.card { border-radius: .8rem; }
-.badge { border-radius: 999px; }
-.chip_fee { display:inline-block; padding:.15rem .6rem; border-radius:999px; background:#dfe8d9; color:#2f5132; font-size:.8rem; }
+/* ============================
+   Paleta global Selva
+   ============================ */
+:root {
+  /* Fondo principal gris azulado muy pálido */
+  --selva-bg: #F1F5F9;
+
+  /* Superficies blancas (tarjetas, contenedores) */
+  --selva-surface: #FFFFFF;
+
+  /* Texto principal y secundario */
+  --selva-text: #111827;        /* casi negro */
+  --selva-text-muted: #6B7280;  /* gris cálido */
+
+  /* Bordes suaves */
+  --selva-border-subtle: #E5E7EB;
+
+  /* Header (barra superior): azul marino de marca (ajustable) */
+  --selva-primary: #111827;
+  --selva-primary-soft: #1F2937;
+
+  /* Badges pastel (estados, chips) */
+  --badge-blue-bg: #DBEAFE;
+  --badge-blue-text: #1D4ED8;
+
+  --badge-amber-bg: #FEF3C7;
+  --badge-amber-text: #92400E;
+
+  --badge-green-bg: #DCFCE7;
+  --badge-green-text: #166534;
+
+  --badge-red-bg: #FEE2E2;
+  --badge-red-text: #B91C1C;
+
+  --chip-bg: #E5E7EB;
+  --chip-text: #374151;
+}
+
+/* ============================
+   Layout base
+   ============================ */
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--selva-bg);
+  color: var(--selva-text);
+  font-variant-numeric: tabular-nums;
+
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", sans-serif;
+  font-size: 0.9rem;
+}
+
+
+h1, h2, h3, h4, h5 {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Si por alguna razón sigue viniendo bg-light, lo neutralizamos */
+body.bg-light {
+  background-color: var(--selva-bg) !important;
+}
+
+/* Contenedor principal */
+.app-main {
+  padding: 1.5rem 1.5rem 2.5rem;
+}
+
+/* ============================
+   Navbar / Header superior
+   ============================ */
+
+.navbar.selva-navbar {
+  background: linear-gradient(90deg, #111827 0%, #1F2937 45%, #0B1120 100%);
+  color: #E5E7EB;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+}
+
+.selva-navbar .navbar-brand {
+  color: #F9FAFB;
+  letter-spacing: 0.03em;
+}
+
+.selva-navbar .navbar-brand:hover {
+  color: #FFFFFF;
+}
+
+.selva-navbar .nav-link {
+  color: #E5E7EB;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.selva-navbar .nav-link.active,
+.selva-navbar .nav-link:hover {
+  color: #FFFFFF;
+}
+
+.selva-navbar .btn-outline-light {
+  border-color: rgba(249, 250, 251, 0.6);
+  color: #F9FAFB;
+}
+
+.selva-navbar .btn-outline-light:hover {
+  background-color: #F9FAFB;
+  color: var(--selva-primary);
+}
+
+/* Ajuste icono hamburguesa */
+.selva-navbar .navbar-toggler {
+  border-color: rgba(249, 250, 251, 0.4);
+}
+
+.selva-navbar .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* ================================
+   NAVBAR SELVAIA - Moderno
+================================ */
+
+.selva-nav {
+  background: #c2d3f5;
+  border-bottom: 1px solid #a9bfe9;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+/* Logo */
+.selva-logo-icon {
+  font-size: 1.4rem;
+  color: #FBBF24;   /* amarillo suave */
+}
+
+.selva-logo-text {
+  font-size: 1.15rem;
+  letter-spacing: 0.5px;
+}
+
+/* Links */
+.selva-nav-links .nav-link {
+  color: #43484e;
+  font-weight: 500;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  transition: 0.15s ease;
+}
+
+.selva-nav-links .nav-link:hover {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+.selva-nav-links .nav-link.active {
+  color: #111827;
+  background: #E5E7EB;
+  font-weight: 600;
+}
+
+/* Botón salir */
+.btn-logout-pill {
+  border-radius: 999px;
+  background: #e5e7eb;
+  border: 1px solid #D1D5DB;
+  color: #374151;
+  font-weight: 500;
+}
+
+.btn-logout-pill:hover {
+  background: #cdcfd3;
+  border-color: #9CA3AF;
+  color: #111827;
+}
+
+/* Mobile toggler */
+.navbar-toggler {
+  border-color: #D1D5DB;
+}
+
+.navbar-toggler-icon {
+  filter: invert(40%);
+}
+
+
+/* ============================
+   Tarjetas & contenedores
+   ============================ */
+
+.card {
+  background-color: var(--selva-surface);
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.3); /* gris azulado suave */
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+/* “Sombras pesadas” suavizadas */
+.card.shadow-sm {
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06) !important;
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  font-weight: 600;
+  color: var(--selva-text);
+}
+
+.card-body {
+  color: var(--selva-text);
+}
+
+/* Tarjetas pensadas para tablas grandes */
+.card-table {
+  overflow: hidden;
+}
+
+/* ============================
+   Tipografía y texto
+   ============================ */
+
+.text-muted,
+.small-muted {
+  color: var(--selva-text-muted) !important;
+}
+
+.small-muted {
+  font-size: 0.8rem;
+}
+
+/* Encabezados de página (título y subtítulo) */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-title h3 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.page-title .sub {
+  margin-top: 0.25rem;
+  color: var(--selva-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Acciones en la cabecera de página */
+.page-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ============================
+   Badges & chips (estados)
+   ============================ */
+
+.badge {
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+/* Badge general de estado */
+.badge-status {
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Ejemplos de mapeo a pastel suave */
+.badge-status--nuevo,
+.badge-status--info {
+  background-color: var(--badge-blue-bg);
+  color: var(--badge-blue-text);
+}
+
+.badge-status--pendiente,
+.badge-status--warning {
+  background-color: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+}
+
+.badge-status--ok,
+.badge-status--completo,
+.badge-status--success {
+  background-color: var(--badge-green-bg);
+  color: var(--badge-green-text);
+}
+
+.badge-status--error,
+.badge-status--rechazado,
+.badge-status--vencido,
+.badge-status--danger {
+  background-color: var(--badge-red-bg);
+  color: var(--badge-red-text);
+}
+
+/* Chips genéricos (resumenes, filtros, etc.) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background-color: var(--chip-bg);
+  color: var(--chip-text);
+  font-size: 0.8rem;
+}
+
+.chip .dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background-color: #9CA3AF;
+}
+
+/* Chip específico de fee (reciclamos el que ya tenías) */
+.chip_fee {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #DFE8D9;
+  color: #2F5132;
+  font-size: 0.8rem;
+}
+
+/* ============================
+   Tablas
+   ============================ */
+
+.table {
+  font-size: 0.9rem;
+  color: var(--selva-text);
+}
+
+.table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--selva-text-muted);
+  border-bottom: 1px solid var(--selva-border-subtle);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  vertical-align: middle;
+}
+
+/* Renglones striped pero suaves */
+.table-striped > tbody > tr:nth-of-type(odd) {
+  --bs-table-accent-bg: rgba(15, 23, 42, 0.02);
+}
+
+/* Tablas dentro de .card: integrar encabezados */
+.card-table .table thead {
+  background-color: #EFF3F8;
+}
+
+/* ============================
+   Formularios / selects pequeños
+   ============================ */
+
+.form-select-sm,
+.form-control-sm {
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+/* Botones "pill" */
+.btn-pill {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* ============================
+   Utilidades varias
+   ============================ */
+
+.label-soft {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--selva-text-muted);
+}
+
+/* Para que los toasts respeten el nuevo look */
+#app-toast .toast-body {
+  background-color: var(--selva-surface);
+  color: var(--selva-text);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+}
+
+
+/* ============================
+   Tarjetas KPI (Dashboard)
+   ============================ */
+
+.card-kpi {
+  background-color: var(--selva-surface);
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  height: 100%;
+}
+
+.card-kpi-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-kpi-icon {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1D4ED8;
+}
+
+.card-kpi-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--selva-text-muted);
+}
+
+.card-kpi-value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--selva-text);
+}
+
+.card-kpi-sub {
+  font-size: 0.85rem;
+  color: var(--selva-text-muted);
+}
+
+/* Pequeños acentos para variaciones */
+.kpi-delta {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.kpi-delta.up {
+  color: #16A34A; /* verde */
+}
+
+.kpi-delta.down {
+  color: #DC2626; /* rojo */
+}
+
+/* ================================
+   ENCABEZADOS DE SECCIÓN GRANDES
+=================================== */
+.section-block {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-banner {
+  margin-bottom: 1.5rem !important;
+}
+
+.section-icon-lg {
+  background: #E0E7FF;               /* Indigo pastel */
+  color: #4338CA;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.section-title-lg {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.section-subtitle {
+  margin: 0;
+  margin-top: 2px;
+  font-size: 0.95rem;
+  color: #6B7280;
+}
+
+/* SECCIÓN BANNER (separador visual de secciones) */
+.section-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: #F8FAFC;
+  padding: 0.9rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+}
+
+.banner-icon {
+  width: 38px;
+  height: 38px;
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.banner-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.banner-subtitle {
+  font-size: 0.9rem;
+  color: #6B7280;
+}
+
+/* ================================
+   Encabezados de sección (eyebrow)
+================================ */
+
+.section-header-line {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--selva-text-muted);
+}
+
+.section-pill {
+  width: 30px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4F46E5 0%, #22C55E 50%, #F59E0B 100%);
+}
+
+.section-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--selva-text);
+}
+
+.section-header-desc {
+  font-size: 0.9rem;
+  color: var(--selva-text-muted);
+}
+/* ================================
+   Paginación DataTables
+================================ */
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: #E5E7EB !important;
+  color: #111827 !important;
+  font-weight: 600;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #F3F4F6 !important;
+  color: #111827 !important;
+}
+
+/* Quitar el borde negro horrible del estado disabled */
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  background: transparent !important;
+  color: #D1D5DB !important;
+  border: none !important;
+}
+
+/* ================================
+   Paginación DataTables – Pills SELVAIA
+================================ */
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border-radius: 999px !important;
+  background: #F3F4F6 !important;
+  border: 1px solid #E5E7EB !important;
+  padding: 6px 14px !important;
+  margin: 0 4px !important;
+
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: all 0.15s ease-in-out;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #E5E7EB !important;
+  color: #111827 !important;
+}
+
+/* Estado deshabilitado */
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  opacity: 0.4 !important;
+  background: #F3F4F6 !important;
+  border: 1px solid #E5E7EB !important;
+  cursor: default !important;
+  box-shadow: none !important;
+}
+
+/* No permitir el azul feo cuando está activo */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: #E5E7EB !important;
+  color: #111827 !important;
+  font-weight: 600 !important;
+  border: 1px solid #D1D5DB !important;
+}
+
+
+/* Quitar el borde azul grueso feo al hacer foco */
+.dataTables_wrapper .dataTables_length select:focus {
+  outline: none;
+  border-color: #CBD5F5;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35);
+}
+
+
+/* Botones de paginación – DataTables v2 (dt-paging-button) y v1 (paginate_button) */
+.dataTables_wrapper .dt-paging .dt-paging-button,
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border-radius: 999px !important;
+  border: 1px solid #E5E7EB !important;
+  background-color: #F3F4F6 !important;
+  padding: 4px 14px !important;
+  margin: 0 4px !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dataTables_wrapper .dt-paging .dt-paging-button:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background-color: #E5E7EB !important;
+  color: #111827 !important;
+}
+
+/* Estado deshabilitado */
+.dataTables_wrapper .dt-paging .dt-paging-button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  opacity: 0.4 !important;
+  background-color: #F3F4F6 !important;
+  border-color: #E5E7EB !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+/* Quitar borde feo de foco */
+.dataTables_wrapper .dt-paging .dt-paging-button:focus,
+.dataTables_wrapper .dataTables_paginate .paginate_button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35);
+}
+
+/* === DT v2: Select "Mostrar 10" como pill === */
+.dt-container .dt-length select {
+  border-radius: 999px !important;
+  border: 1px solid #E5E7EB !important;
+  background-color: #F9FAFB !important;
+  padding: 4px 26px 4px 10px !important;
+  font-size: 0.82rem !important;
+  color: #374151 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.dt-container .dt-length select:focus {
+  outline: none !important;
+  border-color: #CBD5F5 !important;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35) !important;
+}
+
+/* === DT v2: Botones de paginación como pills === */
+.dt-container .dt-paging .dt-paging-button {
+  border-radius: 999px !important;
+  border: 1px solid #E5E7EB !important;
+  background-color: #F3F4F6 !important;
+  padding: 4px 14px !important;
+  margin: 0 4px !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dt-container .dt-paging .dt-paging-button:hover {
+  background-color: #E5E7EB !important;
+  color: #111827 !important;
+}
+
+/* Deshabilitados */
+.dt-container .dt-paging .dt-paging-button.disabled {
+  opacity: 0.4 !important;
+  background-color: #F3F4F6 !important;
+  border-color: #E5E7EB !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+/* Sin borde de foco azul feo */
+.dt-container .dt-paging .dt-paging-button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35) !important;
+}
+
+/* Alinear paginación a la derecha y darle aire */
+.dt-container .dt-paging {
+  text-align: right !important;
+  padding-right: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+/* === DT v2: layout prolijo para "Mostrar 10" === */
+.dt-container .dt-length {
+  margin-bottom: 0.25rem;
+}
+
+.dt-container .dt-length label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0;
+  font-size: 0.82rem;
+  color: var(--selva-text-muted);
+}
+
+/* Ajuste fino del pill para que no se coma el label */
+.dt-container .dt-length select {
+  border-radius: 999px !important;
+  border: 1px solid #E5E7EB !important;
+  background-color: #F9FAFB !important;
+  padding: 2px 20px 2px 10px !important;
+  font-size: 0.82rem !important;
+  color: #374151 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* ================================
+   Botón "+ Nuevo caso" en page-header
+================================ */
+
+.page-actions .btn.btn-primary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px !important;
+  padding: 0.4rem 1.1rem !important;
+
+  height: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+
+  font-size: 0.85rem !important;
+  font-weight: 600;
+  white-space: nowrap;        /* evita que "Nuevo caso" se corte en dos líneas */
+
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+}
+
+/* Variante "sm" aún más compacta */
+.page-actions .btn.btn-primary.btn-sm {
+  padding: 0.35rem 1rem !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+}

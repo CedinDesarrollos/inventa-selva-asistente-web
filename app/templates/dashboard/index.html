@@ -1,100 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 
-<style>
-  /* Paleta */
-  :root{
-    --indigo:#4f46e5; --indigo-100:#eef2ff;
-    --mint:#10b981; --mint-100:#ecfdf5;
-    --amber:#f59e0b; --amber-100:#fff7ed;
-    --rose:#ef4444; --rose-100:#fef2f2;
-    --slate:#64748b; --slate-100:#f1f5f9;
-  }
-
-  /* Tarjetas KPI */
-  .kpi-card{ border:0; border-radius:1rem; box-shadow:0 6px 18px rgba(2,6,23,.06); background:linear-gradient(180deg,#fff,#fafafa); }
-  .kpi-icon{ width:48px; height:48px; border-radius:12px; display:grid; place-items:center; font-size:1.25rem; }
-  .kpi-1 .kpi-icon{ background:var(--indigo-100); color:var(--indigo); }
-  .kpi-2 .kpi-icon{ background:var(--amber-100); color:var(--amber); }
-  .kpi-3 .kpi-icon{ background:var(--mint-100); color:var(--mint); }
-
-  /* Chips y badges */
-  .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; background:var(--slate-100); color:var(--slate); }
-  .chip .dot{ width:.5rem; height:.5rem; border-radius:50%; display:inline-block; }
-  .status-badge{ padding:.25rem .5rem; border-radius:.5rem; font-weight:600; font-size:.8rem; letter-spacing:.2px; white-space:nowrap; }
-  .status-badge[data-state*="pend"]{ background:var(--amber-100); color:var(--amber); }
-  .status-badge[data-state*="ok"],
-  .status-badge[data-state*="done"],
-  .status-badge[data-state*="compl"]{ background:var(--mint-100); color:var(--mint); }
-  .status-badge[data-state*="venc"],
-  .status-badge[data-state*="error"],
-  .status-badge[data-state*="rech"]{ background:var(--rose-100); color:var(--rose); }
-
-  /* Tablas */
-  .table thead th{ font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; border-bottom:1px solid #e5e7eb; white-space:nowrap; }
-  .table tbody td{ vertical-align:middle; }
-  /* Columna de título: flexible y truncable */
-  .table td.col-title{ max-width:520px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-  .card-rounded{ border-radius:1rem; }
-  .card.card-rounded::before{
-    content:""; display:block; height:4px; border-radius:1rem 1rem 0 0;
-    background:linear-gradient(90deg,var(--indigo) 0%, #22c55e 60%, #f59e0b 100%); opacity:.08;
-  }
-
-  /* Header sección + CTA */
-  .section-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-top:1.5rem; margin-bottom:.75rem; }
-  .section-title{ display:flex; align-items:center; gap:.75rem; }
-  .section-icon{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:var(--indigo-100); color:var(--indigo); font-size:1.1rem; box-shadow:0 4px 12px rgba(2,6,23,.04); }
-  .section-text h5{ margin:0; font-weight:700; }
-  .section-text .sub{ margin-top:2px; color:#6b7280; font-size:.9rem; }
-  .btn-pill{ border-radius:999px; padding:.45rem .9rem; font-weight:600; box-shadow:0 4px 12px rgba(2,6,23,.06); }
-
-  /* Etiquetas por tipo */
-  .type-badge{ border-radius:999px; font-weight:700; letter-spacing:.02em; padding:.35rem .75rem; }
-  .type-goods{ background:#ede9fe; color:#5b21b6; }
-  .type-remit{ background:#e0f2fe; color:#075985; }
-
-  /* —— FIX ancho DataTables dentro del card —— */
-  .card .table-responsive{ width:100%; }
-  .card table.dataTable{ width:100% !important; }      /* fuerza 100% */
-  .card table.dataTable th,
-  .card table.dataTable td{ box-sizing:border-box; }
-  .card .dataTables_wrapper{ width:100%; }
-
-  /* quitar gutters que achican el wrapper */
-  .card .dataTables_wrapper .row{ margin-left:0; margin-right:0; }
-  .card .dataTables_wrapper .row > [class^="col-"],
-  .card .dataTables_wrapper .row > [class*=" col-"]{
-    padding-left:0; padding-right:0;
-    flex: 1 1 0;
-  }
-
-  /* Controles con un poco de padding interno */
-  .card .dataTables_length,
-  .card .dataTables_filter,
-  .card .dataTables_info,
-  .card .dataTables_paginate{ padding:.25rem .75rem; }
-  .card .dataTables_filter input{ width:260px; max-width:45vw; }
-
-  /* IMPORTANTE: permitir cálculo natural de ancho */
-  .card .table{ table-layout:auto; }
-</style>
-
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <div>
-    <h3 class="mb-0">📊 Dashboard de Casos</h3>
-    <div class="text-muted small">Resumen y últimas actividades</div>
-  </div>
-  <div class="d-none d-sm-block">
+<!-- Header superior: chips de estados -->
+ <br>
+<div class="page-header mb-2">
+  <div class="page-actions ms-auto d-none d-sm-flex ">
     {% for k,v in por_estado.items() %}
-      <span class="chip me-1">
-        <span class="dot" style="background:
-          {% if 'venc' in k|lower %}var(--rose)
-          {% elif 'pend' in k|lower %}var(--amber)
-          {% elif 'ok' in k|lower or 'compl' in k|lower or 'done' in k|lower %}var(--mint)
-          {% else %}var(--slate){% endif %};
-        "></span>
+      <span class="chip">
+        <span
+          class="dot"
+          style="background:
+            {% if 'venc' in k|lower %}#B91C1C
+            {% elif 'pend' in k|lower %}#F59E0B
+            {% elif 'ok' in k|lower or 'compl' in k|lower or 'done' in k|lower %}#16A34A
+            {% else %}#9CA3AF{% endif %};"
+        ></span>
         {{ k }}: {{ v }}
       </span>
     {% endfor %}
@@ -102,123 +22,161 @@
 </div>
 
 <!-- KPIs -->
-<div class="row g-3">
+<div class="row g-3 mb-3">
+  <!-- KPI 1: Total de casos -->
   <div class="col-12 col-md-4">
-    <div class="card kpi-card kpi-1">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="kpi-icon">📁</div>
-        <div>
-          <div class="text-muted small">Total de casos</div>
-          <div class="fs-3 fw-bold mb-0">{{ total }}</div>
-        </div>
+    <div class="card-kpi shadow-sm">
+      <div class="card-kpi-header">
+        <div class="card-kpi-icon">📁</div>
+        <div class="card-kpi-label">Total de casos</div>
+      </div>
+      <div class="card-kpi-value">
+        {{ total }}
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="card-kpi-sub">Acumulado histórico</div>
       </div>
     </div>
   </div>
+
+  <!-- KPI 2: SLA vencidos -->
   <div class="col-12 col-md-4">
-    <div class="card kpi-card kpi-2">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="kpi-icon">⏰</div>
-        <div>
-          <div class="text-muted small">SLA vencidos</div>
-          <div class="fs-3 fw-bold mb-0">{{ sla }}</div>
-        </div>
+    <div class="card-kpi shadow-sm">
+      <div class="card-kpi-header">
+        <div class="card-kpi-icon">⏰</div>
+        <div class="card-kpi-label">SLA vencidos</div>
+      </div>
+      <div class="card-kpi-value">
+        {{ sla }}
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="card-kpi-sub">Casos con SLA expirado</div>
       </div>
     </div>
   </div>
+
+  <!-- KPI 3: Estados activos -->
   <div class="col-12 col-md-4">
-    <div class="card kpi-card kpi-3">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="kpi-icon">🏷️</div>
-        <div>
-          <div class="text-muted small">Estados activos</div>
-          <div class="mt-1">
-            {% for k,v in por_estado.items() %}
-              <span class="chip me-1">{{ k }}: {{ v }}</span>
-            {% endfor %}
-          </div>
-        </div>
+    <div class="card-kpi shadow-sm">
+      <div class="card-kpi-header">
+        <div class="card-kpi-icon">🏷️</div>
+        <div class="card-kpi-label">Estados activos</div>
+      </div>
+      <div class="card-kpi-value">
+        {{ por_estado|length }}
+      </div>
+      <div class="card-kpi-sub">
+        {% for k,v in por_estado.items() %}
+          <span class="chip me-1 mb-1">{{ k }}: {{ v }}</span>
+        {% endfor %}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Sección: Listas apiladas por tipo de caso -->
-<div class="section-header">
-  <div class="section-title">
-    <div class="section-icon">📋</div>
-    <div class="section-text">
-      <h5 class="mb-0">Últimos casos por tipo</h5>
-      <div class="sub">Incluye cliente, estado y última actualización</div>
+<!-- Encabezado de sección + botón -->
+<div class="section-header-line mt-4 mb-1">
+  <div class="section-header-main">
+    <div class="section-eyebrow">
+      <span class="section-pill"></span>
+      Últimos casos por tipo
     </div>
   </div>
-  <div class="section-actions">
-    <a href="/cases/new" class="btn btn-primary btn-pill">
-      <i class="bi bi-plus-lg"></i> Nuevo Caso
+  <div>
+    <a href="/cases/new" class="btn btn-primary btn-sm btn-pill">
+      + Nuevo
     </a>
   </div>
 </div>
+<br>
+
 
 {% for tipo, lista in cases_by_type.items() %}
   {% set tipo_lower = tipo|lower %}
-  {% set type_class =
+  {% set type_badge_color =
       'type-goods' if 'goods' in tipo_lower
       else 'type-remit' if 'remit' in tipo_lower
       else '' %}
-  <div class="card card-rounded shadow-sm mb-4">
-    <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between">
+
+  <div class="card card-table shadow-sm mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center gap-2">
-        <span class="type-badge {{ type_class }}">{{ tipo }}</span>
-        <span class="text-muted small">({{ lista|length }})</span>
+        <span class="chip {{ type_badge_color }}">
+          {{ tipo }}
+        </span>
+        <span class="label-soft">({{ lista|length }} casos)</span>
       </div>
     </div>
 
-    <div class="card-body pt-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle datatable" id="tbl-{{ loop.index }}">
-          <!-- ⚠️ SIN <colgroup>: DataTables v2 crea uno propio -->
-          <thead>
+    <div class="card-body table-responsive">
+      <table class="table table-striped align-middle datatable" id="tbl-{{ loop.index }}">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Título</th>
+            <th>Estado</th>
+            <th>Actualizado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if lista|length == 0 %}
             <tr>
-              <th style="width:72px">ID</th>
-              <th style="width:240px">Cliente</th>
-              <th>Título</th>
-              <th style="width:140px">Estado</th>
-              <th style="width:180px">Actualizado</th>
+              <td colspan="5" class="text-center text-muted py-4">
+                Sin casos para este tipo
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {% if lista|length == 0 %}
+          {% else %}
+            {% for c in lista %}
+              {% set state_norm = (c.state_lower or '') %}
+              {% if 'venc' in state_norm or 'error' in state_norm or 'rech' in state_norm %}
+                {% set badge_class = 'badge-status--error' %}
+              {% elif 'pend' in state_norm %}
+                {% set badge_class = 'badge-status--pendiente' %}
+              {% elif 'ok' in state_norm or 'compl' in state_norm or 'done' in state_norm %}
+                {% set badge_class = 'badge-status--ok' %}
+              {% else %}
+                {% set badge_class = 'badge-status--info' %}
+              {% endif %}
+
               <tr>
-                <td colspan="5" class="text-center text-muted py-4">Sin casos para este tipo</td>
+                <td>
+                  <a class="text-decoration-none fw-semibold" href="/cases/{{ c.id }}">
+                    #{{ c.id }}
+                  </a>
+                </td>
+                <td>{{ c.customer_nombre }}</td>
+                <td class="col-title">{{ c.title }}</td>
+                <td>
+                  <span class="badge badge-status {{ badge_class }}">
+                    {{ c.state }}
+                  </span>
+                </td>
+                <td>
+                  <span class="text-muted" data-order="{{ c.updated_at }}">
+                    {{ c.updated_at_display }}
+                  </span>
+                </td>
               </tr>
-            {% else %}
-              {% for c in lista %}
-                <tr>
-                  <td><a class="text-decoration-none fw-semibold" href="/cases/{{ c.id }}">#{{ c.id }}</a></td>
-                  <td>{{ c.customer_nombre }}</td>
-                  <td class="col-title">{{ c.title }}</td>
-                  <td><span class="status-badge" data-state="{{ c.state_lower }}">{{ c.state }}</span></td>
-                  <td><span class="text-muted" data-order="{{ c.updated_at }}">{{ c.updated_at_display }}</span></td>
-                </tr>
-              {% endfor %}
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
+            {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
     </div>
   </div>
 {% endfor %}
 
 <script>
-  document.querySelectorAll('table.datatable').forEach((tbl)=>{
+  // Inicializar DataTables en cada tabla de tipo
+  document.querySelectorAll('table.datatable').forEach((tbl) => {
     new DataTable(tbl, {
-      autoWidth: false,               // no calcular/forzar anchos (evita px duros)
-      // ⚠️ No usamos "columns" con width para que no duplique <colgroup>
+      autoWidth: false,
       pageLength: 10,
-      order: [[4,'desc']],
+      order: [[4, 'desc']],
       stateSave: true,
       responsive: false,
       scrollX: false,
-      // DataTables v2: control de posiciones sin grid que achique
+      pagingType: 'simple',   // 👈 solo «Anterior» y «Siguiente»
       layout: {
         topStart: 'pageLength',
         topEnd: 'search',
@@ -229,11 +187,15 @@
         search: "Buscar:",
         lengthMenu: "Mostrar _MENU_",
         info: "Mostrando _START_–_END_ de _TOTAL_",
-        paginate: { previous: "‹", next: "›" },
+        paginate: {
+          previous: "‹ Anterior",
+          next: "Siguiente ›"
+        },
         zeroRecords: "Sin resultados"
       }
     });
   });
 </script>
+
 
 {% endblock %}

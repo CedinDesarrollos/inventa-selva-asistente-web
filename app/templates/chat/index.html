@@ -2,123 +2,246 @@
 {% block content %}
 
 <style>
+  :root{
+    --bg: #f3f4f6;
+    --ink: #0f172a;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --indigo: #4f46e5;
+    --indigo-soft:#eef2ff;
+    --hairline: #e5e7eb;
+    --surface: #f9fafb;
+  }
+
+  body{
+    background-color: var(--bg);
+  }
+
   .chat-wrapper{
     max-width: 900px;
-    margin: 0 auto;
+    margin: 1.5rem auto 2.5rem;
   }
+
   .chat-card{
-    border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(15,23,42,.12);
+    border-radius: 18px;
     overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    box-shadow:
+      0 18px 40px rgba(15,23,42,.06),
+      0 0 0 1px rgba(148,163,184,.06);
   }
-  .chat-header{
-    background: linear-gradient(135deg, #4f46e5, #0ea5a4);
-    color: #fff;
+
+  /* Mini header dentro del card (no banner) */
+  .chat-mini-header{
+    padding: .75rem 1.25rem .6rem;
+    border-bottom: 1px solid var(--hairline);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
   }
-  .chat-header h5{
-    margin: 0;
-    font-weight: 600;
+  .chat-mini-main{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
   }
-  .chat-header small{
-    opacity: .9;
+  .chat-mini-icon{
+    width:32px;
+    height:32px;
+    border-radius:999px;
+    display:grid;
+    place-items:center;
+    background: var(--indigo-soft);
+    color: var(--indigo);
+    font-size:1.1rem;
   }
+  .chat-mini-text{
+    display:flex;
+    flex-direction:column;
+  }
+  .chat-mini-title{
+    font-weight:700;
+    font-size:.98rem;
+    color:var(--ink);
+  }
+  .chat-mini-sub{
+    font-size:.8rem;
+    color:var(--muted);
+  }
+  .chat-mini-status{
+    font-size:.8rem;
+    color:var(--muted);
+  }
+  .chat-mini-status span.dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    margin-right:.35rem;
+  }
+
   .chat-body{
-    background: #0b1220;
-    background: radial-gradient(900px 600px at 10% -10%, rgba(79,70,229,.25), transparent),
-                radial-gradient(900px 600px at 90% 110%, rgba(14,165,164,.2), transparent),
-                #020617;
-    color: #e5e7eb;
-    height: 70vh;
-    max-height: 600px;
-    overflow-y: auto;
-    padding: 1rem;
+    padding: 0;
+    background: var(--surface);
   }
+
+  .chat-body-inner{
+    display:flex;
+    flex-direction:column;
+    height: 60vh;
+    max-height: 560px;
+  }
+
+  /* Área de mensajes */
+  .chat-scroll{
+    flex:1;
+    padding: .9rem 1.1rem 1rem;
+    overflow-y:auto;
+    background:#f9fafb;
+  }
+
   .msg-row{
-    display: flex;
-    margin-bottom: .75rem;
+    display:flex;
+    margin-bottom: .6rem;
   }
-  .msg-row.viki{
-    justify-content: flex-start;
-  }
-  .msg-row.user{
-    justify-content: flex-end;
-  }
+  .msg-row.viki{ justify-content:flex-start; }
+  .msg-row.user{ justify-content:flex-end; }
+  .msg-row.system{ justify-content:center; }
+
   .msg-bubble{
     max-width: 75%;
-    padding: .6rem .8rem;
-    border-radius: .9rem;
+    padding: .55rem .75rem;
+    border-radius: 0.9rem;
     font-size: .9rem;
     line-height: 1.35;
-    box-shadow: 0 6px 18px rgba(15,23,42,.35);
     word-break: break-word;
+    border:1px solid var(--hairline);
+    background:#ffffff;
+    color: var(--ink);
+    box-shadow: 0 3px 8px rgba(15,23,42,.04);
   }
+
   .msg-row.viki .msg-bubble{
-    border-bottom-left-radius: .2rem;
-    background: rgba(15,23,42,.85);
-    border: 1px solid rgba(148,163,184,.35);
+    border-bottom-left-radius: .25rem;
+    background:#eef2ff;
+    border-color:#c7d2fe;
   }
+
   .msg-row.user .msg-bubble{
-    border-bottom-right-radius: .2rem;
-    background: linear-gradient(135deg,#4f46e5,#0ea5a4);
-    color: #f9fafb;
+    border-bottom-right-radius: .25rem;
+    background:linear-gradient(135deg,#4f46e5,#6366f1);
+    color:#eef2ff;
+    border-color:rgba(129,140,248,.8);
   }
+
+  .msg-row.system .msg-bubble{
+    max-width: 90%;
+    font-size:.82rem;
+    background:#fef3c7;
+    border-color:#fde68a;
+    color:#92400e;
+  }
+
   .msg-meta{
-    display: block;
-    font-size: .7rem;
-    opacity: .7;
-    margin-top: .15rem;
+    display:block;
+    font-size:.72rem;
+    opacity:.72;
+    margin-top:.2rem;
   }
+
   .chat-footer{
-    background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
+    padding:.65rem 1.1rem .8rem;
+    background:#ffffff;
+    border-top:1px solid var(--hairline);
+  }
+
+  .chat-footer label{
+    font-size:.78rem;
+    color:var(--muted);
+  }
+
+  .btn-pill{
+    border-radius:999px;
+  }
+  .btn-primary{
+    background:var(--indigo);
+    border-color:var(--indigo);
+  }
+  .btn-primary:hover{
+    background:#4338ca;
+    border-color:#4338ca;
+  }
+
+  @media (max-width: 768px){
+    .chat-wrapper{
+      margin: 1rem .5rem 2rem;
+    }
+    .chat-card{
+      border-radius: 14px;
+    }
   }
 </style>
 
-<div class="chat-wrapper mt-3 mb-4">
+<div class="chat-wrapper">
   <div class="card chat-card">
-    <div class="card-header chat-header d-flex align-items-center justify-content-between">
-      <div>
-        <h5>💬 Chat con Viki</h5>
-        <small>Asistente virtual de Selva · te ayuda a crear y gestionar casos GOODS y REMIT.</small>
+
+    <!-- Mini header simple -->
+    <div class="chat-mini-header">
+      <div class="chat-mini-main">
+        <div class="chat-mini-icon">🤖</div>
+        <div class="chat-mini-text">
+          <div class="chat-mini-title">Chat con Viki</div>
+          <div class="chat-mini-sub">
+            Asistente virtual de Selva para crear y gestionar casos GOODS y REMIT.
+          </div>
+        </div>
       </div>
-      <div class="text-end">
-        <span class="badge bg-success-subtle text-bg-success">
-          <span class="me-1">🟢</span>En línea
-        </span>
+      <div class="chat-mini-status">
+        <span class="dot"></span>En línea
       </div>
     </div>
 
-    <div class="card-body chat-body" id="chat-messages">
-      <div class="msg-row viki">
-        <div class="msg-bubble">
-          <strong>Viki:</strong> Hola {{ username }} 👋🏻.<br>
-          Soy tu asistente. Podés decirme cosas como:<br>
-          <span class="msg-meta">
-            • “Quiero crear un caso GOODS para Lili por 200 USD”<br>
-            • “Listá mis casos abiertos”<br>
-            • “Cotizá un remit de 1000 USD a Paraguay”
-          </span>
+    <!-- Body -->
+    <div class="card-body chat-body">
+      <div class="chat-body-inner">
+        <div class="chat-scroll" id="chat-messages">
+          <!-- Mensaje inicial de Viki con ejemplos -->
+          <div class="msg-row viki">
+            <div class="msg-bubble">
+              <strong>Viki:</strong> Hola {{ username|default('Usuario Web') }} 👋.<br>
+              Estoy lista para ayudarte con casos GOODS y REMIT.
+              <span class="msg-meta">
+                Podés decirme, por ejemplo:<br>
+                • “Quiero crear un caso GOODS para Lili por 200 USD”<br>
+                • “Mostrame mis casos abiertos”<br>
+                • “Cotizá un remit de 1000 USD a Paraguay”
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Footer -->
     <div class="card-footer chat-footer">
       <form id="chat-form" class="d-flex gap-2 align-items-end">
         <div class="flex-grow-1">
-          <label for="chat-input" class="form-label small mb-1 text-muted">
-            Escribe tu mensaje para Viki
+          <label for="chat-input" class="form-label mb-1">
+            Escribí tu mensaje para Viki
           </label>
           <textarea id="chat-input" class="form-control" rows="2"
             placeholder="Ej: Viki, creá un GOODS para Chari por 150 USD..."></textarea>
         </div>
         <div class="d-flex flex-column gap-2">
-          <!-- Aquí en el futuro podés agregar botón de adjuntar archivos -->
-          <button type="submit" class="btn btn-primary px-3">
+          <button type="submit" class="btn btn-primary btn-pill px-3">
             Enviar
           </button>
         </div>
       </form>
     </div>
+
   </div>
 </div>
 
@@ -159,7 +282,6 @@
     const text = (input.value || '').trim();
     if(!text){ return; }
 
-    // Muestra mensaje del usuario
     appendMessage('user', text);
     input.value = '';
     input.focus();
@@ -173,7 +295,6 @@
         body: JSON.stringify({
           text: text,
           username: USERNAME
-          // Aquí podrías pasar identity_id, identity_rol, etc. si los sacas del backend
         })
       });
 

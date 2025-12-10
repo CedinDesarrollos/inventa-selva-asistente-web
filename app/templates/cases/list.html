@@ -1,24 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card shadow-sm">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div>Casos</div>
-    <div>
-      <select id="f-type" class="form-select form-select-sm" style="width:auto;display:inline-block;">
-        <option value="">Todos</option>
-        <option value="GOODS">GOODS</option>
-        <option value="REMIT">REMIT</option>
-      </select>
-      <a href="/cases/new" class="btn btn-sm btn-primary">+ Nuevo Caso</a>
+<br>
+<div class="page-header">
+  <div class="page-title">
+    <div class="section-eyebrow">
+      <span class="section-pill"></span>
+      Gestión de casos
     </div>
+    <p class="section-header-desc mb-0 mt-2">
+      Listado de casos activos y cerrados.
+    </p>
   </div>
+
+  <div class="page-actions">
+    <select id="f-type" class="form-select form-select-sm me-2">
+      <option value="">Todos</option>
+      <option value="GOODS">GOODS</option>
+      <option value="REMIT">REMIT</option>
+    </select>
+    <a href="/cases/new" class="btn btn-primary btn-sm btn-pill">
+      + Nuevo   
+    </a>
+  </div>
+</div>
+
+<div class="card card-table">
   <div class="card-body table-responsive">
-    <table class="table table-striped" id="tbl-cases">
-      <thead><tr><th>ID</th><th>Tipo</th><th>Estado</th><th>Creado</th></tr></thead>
+    <table class="table table-striped align-middle datatable" id="tbl-cases">
+      <thead>
+        <tr>
+          <th style="width:80px;">ID</th>
+          <th style="width:120px;">Tipo</th>
+          <th style="width:140px;">Estado</th>
+          <th>Creado</th>
+        </tr>
+      </thead>
       <tbody>
         {% for c in items %}
         <tr>
-          <td><a href="/cases/{{ c.id }}">{{ c.id }}</a></td>
+          <td>
+            <a class="text-decoration-none fw-semibold" href="/cases/{{ c.id }}">
+              #{{ c.id }}
+            </a>
+          </td>
           <td>{{ c.case_type }}</td>
           <td>{{ c.state }}</td>
           <td>{{ c.created_at }}</td>
@@ -28,10 +52,40 @@
     </table>
   </div>
 </div>
+
 <script>
-const dt = new DataTable('#tbl-cases');
-document.getElementById('f-type').onchange = (e) => {
-  dt.column(1).search(e.target.value).draw();
-};
+  const tbl = document.getElementById('tbl-cases');
+
+  const dt = new DataTable(tbl, {
+    autoWidth: false,
+    pageLength: 10,
+    order: [[0, 'desc']],
+    stateSave: true,
+    responsive: false,
+    scrollX: false,
+    pagingType: 'simple_numbers',
+    layout: {
+      topStart: 'pageLength',
+      topEnd: 'search',
+      bottomStart: 'info',
+      bottomEnd: 'paging'
+    },
+    language: {
+      search: "Buscar:",
+      lengthMenu: "Mostrar _MENU_ por página",
+      info: "Mostrando _START_–_END_ de _TOTAL_",
+      infoEmpty: "Sin registros",
+      paginate: {
+        previous: "‹ Anterior",
+        next: "Siguiente ›"
+      },
+      zeroRecords: "Sin resultados"
+    }
+  });
+
+  document.getElementById('f-type').addEventListener('change', (e) => {
+    dt.column(1).search(e.target.value).draw();
+  });
 </script>
+
 {% endblock %}
